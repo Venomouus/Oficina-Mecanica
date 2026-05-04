@@ -1,10 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Oficina.API.Contracts;
-using Oficina.Domain.Entities;
-using Oficina.Domain.Validation;
-using Oficina.Infrastructure.Persistence;
+using Oficina.Application.Services;
 
 namespace Oficina.API.Controllers;
 
@@ -13,75 +10,66 @@ namespace Oficina.API.Controllers;
 [Route("api/[controller]")]
 public class ClientesController : ControllerBase
 {
-    private readonly OficinaDbContext _context;
+    private readonly ClienteService _service;
 
-    public ClientesController(OficinaDbContext context) => _context = context;
+    public ClientesController(ClienteService service)
+    {
+        _service = service;
+    }
 
     [HttpGet]
-    public async Task<IActionResult> Get() => Ok(await _context.Clientes.AsNoTracking().ToListAsync());
+    public async Task<IActionResult> Get()
+    {
+        var clientes = await _service.ListarAsync();
+        return Ok(clientes.Select(ClienteResponse.FromEntity));
+    }
 
-    [HttpGet("{id:guid}")]
+    [HttpGet("{id}")]
     public async Task<IActionResult> Get(Guid id)
     {
-        var cliente = await _context.Clientes.AsNoTracking().Include(item => item.Veiculos).FirstOrDefaultAsync(item => item.Id == id);
-        return cliente is null ? NotFound() : Ok(cliente);
+        var cliente = await _service.ObterPorIdAsync(id);
+
+        if (cliente == null)
+            return NotFound();
+
+        return Ok(ClienteResponse.FromEntity(cliente));
     }
 
     [HttpPost]
     public async Task<IActionResult> Post(ClienteRequest request)
     {
-        if (!DocumentoValidator.IsValid(request.CpfCnpj))
-            return BadRequest(new { message = "CPF/CNPJ invalido." });
-
-        var documento = DocumentoValidator.Normalize(request.CpfCnpj);
-        if (await _context.Clientes.AnyAsync(item => item.CpfCnpj == documento))
-            return Conflict(new { message = "Cliente ja cadastrado com este CPF/CNPJ." });
-
-        var cliente = new Cliente
+        try
         {
-            Nome = request.Nome,
-            CpfCnpj = documento,
-            Telefone = request.Telefone,
-            Email = request.Email
-        };
+            var cliente = await _service.CriarAsync(
+                request.Nome,
+                request.CpfCnpj,
+                request.Telefone,
+                request.Email);
 
-        _context.Clientes.Add(cliente);
-        await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(Get), new { id = cliente.Id }, cliente);
+            return CreatedAtAction(nameof(Get), new { id = cliente.Id }, ClienteResponse.FromEntity(cliente));
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
-    [HttpPut("{id:guid}")]
+    [HttpPut("{id}")]
     public async Task<IActionResult> Put(Guid id, ClienteRequest request)
     {
-        if (!DocumentoValidator.IsValid(request.CpfCnpj))
-            return BadRequest(new { message = "CPF/CNPJ invalido." });
+        await _service.AtualizarAsync(
+            id,
+            request.Nome,
+            request.Telefone,
+            request.Email);
 
-        var cliente = await _context.Clientes.FindAsync(id);
-        if (cliente is null)
-            return NotFound();
-
-        var documento = DocumentoValidator.Normalize(request.CpfCnpj);
-        if (await _context.Clientes.AnyAsync(item => item.Id != id && item.CpfCnpj == documento))
-            return Conflict(new { message = "Outro cliente ja usa este CPF/CNPJ." });
-
-        cliente.Nome = request.Nome;
-        cliente.CpfCnpj = documento;
-        cliente.Telefone = request.Telefone;
-        cliente.Email = request.Email;
-
-        await _context.SaveChangesAsync();
         return NoContent();
     }
 
-    [HttpDelete("{id:guid}")]
+    [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id)
     {
-        var cliente = await _context.Clientes.FindAsync(id);
-        if (cliente is null)
-            return NotFound();
-
-        _context.Clientes.Remove(cliente);
-        await _context.SaveChangesAsync();
+        await _service.RemoverAsync(id);
         return NoContent();
     }
 }

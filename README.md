@@ -1,6 +1,6 @@
 # Oficina Mecanica API
 
-MVP de back-end monolitico em ASP.NET Core 8 para gestao de clientes, veiculos, servicos, pecas/insumos e ordens de servico de uma oficina mecanica.
+MVP de back-end monolitico em ASP.NET Core 8 para gestao de clientes, veiculos, servicos, pecas/insumos e ordens de servico de uma oficina mecânica.
 
 ## Arquitetura
 
@@ -11,7 +11,8 @@ MVP de back-end monolitico em ASP.NET Core 8 para gestao de clientes, veiculos, 
 
 ## Banco de dados
 
-Foi escolhido PostgreSQL por ser relacional, robusto, gratuito e adequado para dados transacionais da oficina: clientes, veiculos, estoque, itens da OS e historico precisam de integridade referencial, indices unicos e consultas administrativas consistentes.
+Foi escolhido PostgreSQL por ser relacional, robusto, gratuito e adequado para dados transacionais da oficina: clientes, veiculos, estoque, itens da OS e 
+historico precisam de integridade referencial, indices unicos e consultas administrativas consistentes.
 
 ## Executar com Docker
 
@@ -68,7 +69,16 @@ Os testes cobrem validacao de documentos, placas, fluxo de status/orcamento da O
 
 ## Observacoes de seguranca
 
-- APIs administrativas exigem JWT.
-- CPF/CNPJ e placas sao normalizados e validados antes de persistir.
-- A consulta/aprovacao de OS pelo cliente exige o documento vinculado a OS.
-- Para producao, troque `Jwt:Key`, `Jwt:AdminPassword` e use secrets/variaveis de ambiente.
+Foi executado um scan de vulnerabilidades com a ferramenta Snyk CLI nas dependências NuGet da solução OficinaMecanica.sln.
+
+Comando executado:
+snyk test --file=OficinaMecanica.sln --json > snyk-report.json
+
+Resultado:
+A análise não identificou vulnerabilidades conhecidas nas dependências dos projetos Oficina.API, Oficina.Domain, Oficina.Application, Oficina.Infrastructure e Oficina.Tests.
+
+Resumo do Snyk:
+- Status: aprovado
+- Vulnerabilidades encontradas: 0
+- Projetos analisados: 5
+- Package manager: NuGet

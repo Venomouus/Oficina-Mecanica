@@ -1,10 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Oficina.API.Contracts;
-using Oficina.Domain.Entities;
-using Oficina.Domain.Validation;
-using Oficina.Infrastructure.Persistence;
+using Oficina.Application.Services;
 
 namespace Oficina.API.Controllers;
 
@@ -13,85 +10,60 @@ namespace Oficina.API.Controllers;
 [Route("api/[controller]")]
 public class VeiculosController : ControllerBase
 {
-    private readonly OficinaDbContext _context;
+    private readonly VeiculoService _service;
 
-    public VeiculosController(OficinaDbContext context) => _context = context;
+    public VeiculosController(VeiculoService service)
+    {
+        _service = service;
+    }
 
     [HttpGet]
-    public async Task<IActionResult> Get() => Ok(await _context.Veiculos.AsNoTracking().Include(item => item.Cliente).ToListAsync());
+    public async Task<IActionResult> Get()
+    {
+        return Ok(await _service.ListarAsync());
+    }
 
-    [HttpGet("{id:guid}")]
+    [HttpGet("{id}")]
     public async Task<IActionResult> Get(Guid id)
     {
-        var veiculo = await _context.Veiculos.AsNoTracking().Include(item => item.Cliente).FirstOrDefaultAsync(item => item.Id == id);
-        return veiculo is null ? NotFound() : Ok(veiculo);
+        var veiculo = await _service.ObterPorIdAsync(id);
+
+        if (veiculo == null)
+            return NotFound();
+
+        return Ok(veiculo);
     }
 
     [HttpPost]
     public async Task<IActionResult> Post(VeiculoRequest request)
     {
-        var validation = await ValidateRequest(request);
-        if (validation is not null)
-            return validation;
+        var veiculo = await _service.CriarAsync(
+            request.ClienteId,
+            request.Placa,
+            request.Marca,
+            request.Modelo,
+            request.Ano);
 
-        var veiculo = new Veiculo
-        {
-            Placa = PlacaValidator.Normalize(request.Placa),
-            Marca = request.Marca,
-            Modelo = request.Modelo,
-            Ano = request.Ano,
-            ClienteId = request.ClienteId
-        };
-
-        _context.Veiculos.Add(veiculo);
-        await _context.SaveChangesAsync();
         return CreatedAtAction(nameof(Get), new { id = veiculo.Id }, veiculo);
     }
 
-    [HttpPut("{id:guid}")]
+    [HttpPut("{id}")]
     public async Task<IActionResult> Put(Guid id, VeiculoRequest request)
     {
-        var veiculo = await _context.Veiculos.FindAsync(id);
-        if (veiculo is null)
-            return NotFound();
+        await _service.AtualizarAsync(
+            id,
+            request.Placa,
+            request.Marca,
+            request.Modelo,
+            request.Ano);
 
-        var validation = await ValidateRequest(request, id);
-        if (validation is not null)
-            return validation;
-
-        veiculo.Placa = PlacaValidator.Normalize(request.Placa);
-        veiculo.Marca = request.Marca;
-        veiculo.Modelo = request.Modelo;
-        veiculo.Ano = request.Ano;
-        veiculo.ClienteId = request.ClienteId;
-        await _context.SaveChangesAsync();
         return NoContent();
     }
 
-    [HttpDelete("{id:guid}")]
+    [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id)
     {
-        var veiculo = await _context.Veiculos.FindAsync(id);
-        if (veiculo is null)
-            return NotFound();
-
-        _context.Veiculos.Remove(veiculo);
-        await _context.SaveChangesAsync();
+        await _service.RemoverAsync(id);
         return NoContent();
-    }
-
-    private async Task<IActionResult?> ValidateRequest(VeiculoRequest request, Guid? currentId = null)
-    {
-        if (!PlacaValidator.IsValid(request.Placa))
-            return BadRequest(new { message = "Placa invalida." });
-
-        if (!await _context.Clientes.AnyAsync(item => item.Id == request.ClienteId))
-            return BadRequest(new { message = "Cliente nao encontrado." });
-
-        var placa = PlacaValidator.Normalize(request.Placa);
-        if (await _context.Veiculos.AnyAsync(item => item.Id != currentId && item.Placa == placa))
-            return Conflict(new { message = "Veiculo ja cadastrado com esta placa." });
-
-        return null;
     }
 }

@@ -1,9 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Oficina.API.Contracts;
-using Oficina.Domain.Entities;
-using Oficina.Infrastructure.Persistence;
+using Oficina.Application.Services;
 
 namespace Oficina.API.Controllers;
 
@@ -12,61 +10,59 @@ namespace Oficina.API.Controllers;
 [Route("api/[controller]")]
 public class ServicosController : ControllerBase
 {
-    private readonly OficinaDbContext _context;
+    private readonly ServicoService _service;
 
-    public ServicosController(OficinaDbContext context) => _context = context;
+    public ServicosController(ServicoService service)
+    {
+        _service = service;
+    }
 
     [HttpGet]
-    public async Task<IActionResult> Get() => Ok(await _context.Servicos.AsNoTracking().ToListAsync());
+    public async Task<IActionResult> Get()
+    {
+        return Ok(await _service.ListarAsync());
+    }
 
-    [HttpGet("{id:guid}")]
+    [HttpGet("{id}")]
     public async Task<IActionResult> Get(Guid id)
     {
-        var servico = await _context.Servicos.AsNoTracking().FirstOrDefaultAsync(item => item.Id == id);
-        return servico is null ? NotFound() : Ok(servico);
+        var servico = await _service.ObterPorIdAsync(id);
+
+        if (servico == null)
+            return NotFound();
+
+        return Ok(servico);
     }
 
     [HttpPost]
     public async Task<IActionResult> Post(ServicoRequest request)
     {
-        var servico = new Servico
-        {
-            Nome = request.Nome,
-            Descricao = request.Descricao,
-            Preco = request.Preco,
-            TempoEstimadoMinutos = request.TempoEstimadoMinutos,
-            Ativo = request.Ativo
-        };
-        _context.Servicos.Add(servico);
-        await _context.SaveChangesAsync();
+        var servico = await _service.CriarAsync(
+            request.Nome,
+            request.Descricao,
+            request.Preco,
+            request.TempoEstimadoMinutos);
+
         return CreatedAtAction(nameof(Get), new { id = servico.Id }, servico);
     }
 
-    [HttpPut("{id:guid}")]
+    [HttpPut("{id}")]
     public async Task<IActionResult> Put(Guid id, ServicoRequest request)
     {
-        var servico = await _context.Servicos.FindAsync(id);
-        if (servico is null)
-            return NotFound();
+        await _service.AtualizarAsync(
+            id,
+            request.Nome,
+            request.Descricao,
+            request.Preco,
+            request.TempoEstimadoMinutos);
 
-        servico.Nome = request.Nome;
-        servico.Descricao = request.Descricao;
-        servico.Preco = request.Preco;
-        servico.TempoEstimadoMinutos = request.TempoEstimadoMinutos;
-        servico.Ativo = request.Ativo;
-        await _context.SaveChangesAsync();
         return NoContent();
     }
 
-    [HttpDelete("{id:guid}")]
+    [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id)
     {
-        var servico = await _context.Servicos.FindAsync(id);
-        if (servico is null)
-            return NotFound();
-
-        _context.Servicos.Remove(servico);
-        await _context.SaveChangesAsync();
+        await _service.RemoverAsync(id);
         return NoContent();
     }
 }

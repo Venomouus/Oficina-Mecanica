@@ -18,6 +18,12 @@ public record VeiculoRequest(
     [Range(1900, 2100)] int Ano,
     [Required] Guid ClienteId);
 
+public record VeiculoOrdemServicoRequest(
+    [Required, MaxLength(10)] string Placa,
+    [Required, MaxLength(80)] string Marca,
+    [Required, MaxLength(80)] string Modelo,
+    [Range(1900, 2100)] int Ano);
+
 public record ServicoRequest(
     [Required, MaxLength(120)] string Nome,
     [MaxLength(500)] string Descricao,
@@ -37,7 +43,7 @@ public record ReporEstoqueRequest([Range(1, 1000000)] int Quantidade);
 
 public record CriarOrdemServicoRequest(
     [Required, MaxLength(18)] string CpfCnpjCliente,
-    VeiculoRequest Veiculo,
+    VeiculoOrdemServicoRequest Veiculo,
     List<Guid> ServicosIds,
     List<PecaOrdemRequest> Pecas,
     [MaxLength(1000)] string? Observacoes);

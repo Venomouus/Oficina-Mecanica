@@ -1,12 +1,5 @@
 # DDD - Oficina Mecanica
 
-Este arquivo esta em formato Mermaid. Voce pode usar em:
-
-- Lucidchart: importar/colar Mermaid, se a opcao estiver disponivel na sua conta.
-- diagrams.net/draw.io: `Arrange > Insert > Advanced > Mermaid`.
-- Mermaid Live Editor: https://mermaid.live
-- VS Code: extensao `Markdown Preview Mermaid Support`.
-
 ## 1. Context Map
 
 ```mermaid

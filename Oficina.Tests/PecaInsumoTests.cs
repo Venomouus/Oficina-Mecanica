@@ -1,4 +1,4 @@
-using Oficina.Domain.Entities;
+﻿using Oficina.Domain.Entities;
 using Xunit;
 
 namespace Oficina.Tests;
@@ -8,7 +8,7 @@ public class PecaInsumoTests
     [Fact]
     public void BaixarEstoque_DeveReduzirQuantidade()
     {
-        var peca = new PecaInsumo { Nome = "Filtro", QuantidadeEstoque = 5 };
+        var peca = CriarPeca(5);
 
         peca.BaixarEstoque(2);
 
@@ -18,7 +18,7 @@ public class PecaInsumoTests
     [Fact]
     public void BaixarEstoque_DeveBloquearQuantidadeInsuficiente()
     {
-        var peca = new PecaInsumo { Nome = "Filtro", QuantidadeEstoque = 1 };
+        var peca = CriarPeca(1);
 
         Assert.Throws<InvalidOperationException>(() => peca.BaixarEstoque(2));
     }
@@ -26,7 +26,7 @@ public class PecaInsumoTests
     [Fact]
     public void BaixarEstoque_DeveBloquearQuantidadeInvalida()
     {
-        var peca = new PecaInsumo { Nome = "Filtro", QuantidadeEstoque = 1 };
+        var peca = CriarPeca(1);
 
         Assert.Throws<InvalidOperationException>(() => peca.BaixarEstoque(0));
     }
@@ -34,7 +34,7 @@ public class PecaInsumoTests
     [Fact]
     public void ReporEstoque_DeveSomarQuantidade()
     {
-        var peca = new PecaInsumo { Nome = "Filtro", QuantidadeEstoque = 1 };
+        var peca = CriarPeca(1);
 
         peca.ReporEstoque(4);
 
@@ -44,8 +44,13 @@ public class PecaInsumoTests
     [Fact]
     public void ReporEstoque_DeveBloquearQuantidadeInvalida()
     {
-        var peca = new PecaInsumo { Nome = "Filtro", QuantidadeEstoque = 1 };
+        var peca = CriarPeca(1);
 
         Assert.Throws<InvalidOperationException>(() => peca.ReporEstoque(0));
+    }
+
+    private static PecaInsumo CriarPeca(int quantidadeEstoque)
+    {
+        return new PecaInsumo("Filtro", "FILTRO", 10, quantidadeEstoque, 0);
     }
 }

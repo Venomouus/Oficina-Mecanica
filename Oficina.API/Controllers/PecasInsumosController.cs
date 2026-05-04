@@ -1,9 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Oficina.API.Contracts;
-using Oficina.Domain.Entities;
-using Oficina.Infrastructure.Persistence;
+using Oficina.Application.Common;
+using Oficina.Application.Services;
 
 namespace Oficina.API.Controllers;
 
@@ -12,81 +11,87 @@ namespace Oficina.API.Controllers;
 [Route("api/pecas-insumos")]
 public class PecasInsumosController : ControllerBase
 {
-    private readonly OficinaDbContext _context;
+    private readonly PecaInsumoService _service;
 
-    public PecasInsumosController(OficinaDbContext context) => _context = context;
+    public PecasInsumosController(PecaInsumoService service)
+    {
+        _service = service;
+    }
 
     [HttpGet]
-    public async Task<IActionResult> Get() => Ok(await _context.PecasInsumos.AsNoTracking().ToListAsync());
+    public async Task<IActionResult> Get()
+    {
+        return Ok(await _service.ListarAsync());
+    }
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> Get(Guid id)
     {
-        var peca = await _context.PecasInsumos.AsNoTracking().FirstOrDefaultAsync(item => item.Id == id);
+        var peca = await _service.ObterPorIdAsync(id);
         return peca is null ? NotFound() : Ok(peca);
     }
 
     [HttpPost]
     public async Task<IActionResult> Post(PecaInsumoRequest request)
     {
-        if (await _context.PecasInsumos.AnyAsync(item => item.Codigo == request.Codigo))
-            return Conflict(new { message = "Ja existe uma peca/insumo com este codigo." });
+        var resultado = await _service.CriarAsync(
+            request.Nome,
+            request.Codigo,
+            request.PrecoUnitario,
+            request.QuantidadeEstoque,
+            request.EstoqueMinimo,
+            request.Ativo);
 
-        var peca = new PecaInsumo
-        {
-            Nome = request.Nome,
-            Codigo = request.Codigo,
-            PrecoUnitario = request.PrecoUnitario,
-            QuantidadeEstoque = request.QuantidadeEstoque,
-            EstoqueMinimo = request.EstoqueMinimo,
-            Ativo = request.Ativo
-        };
-        _context.PecasInsumos.Add(peca);
-        await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(Get), new { id = peca.Id }, peca);
+        if (!resultado.Sucesso)
+            return Responder(resultado);
+
+        return CreatedAtAction(nameof(Get), new { id = resultado.Valor!.Id }, resultado.Valor);
     }
 
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Put(Guid id, PecaInsumoRequest request)
     {
-        var peca = await _context.PecasInsumos.FindAsync(id);
-        if (peca is null)
-            return NotFound();
+        var resultado = await _service.AtualizarAsync(
+            id,
+            request.Nome,
+            request.Codigo,
+            request.PrecoUnitario,
+            request.QuantidadeEstoque,
+            request.EstoqueMinimo,
+            request.Ativo);
 
-        if (await _context.PecasInsumos.AnyAsync(item => item.Id != id && item.Codigo == request.Codigo))
-            return Conflict(new { message = "Ja existe outra peca/insumo com este codigo." });
-
-        peca.Nome = request.Nome;
-        peca.Codigo = request.Codigo;
-        peca.PrecoUnitario = request.PrecoUnitario;
-        peca.QuantidadeEstoque = request.QuantidadeEstoque;
-        peca.EstoqueMinimo = request.EstoqueMinimo;
-        peca.Ativo = request.Ativo;
-        await _context.SaveChangesAsync();
-        return NoContent();
+        return Responder(resultado);
     }
 
     [HttpPatch("{id:guid}/estoque")]
     public async Task<IActionResult> ReporEstoque(Guid id, ReporEstoqueRequest request)
     {
-        var peca = await _context.PecasInsumos.FindAsync(id);
-        if (peca is null)
-            return NotFound();
-
-        peca.ReporEstoque(request.Quantidade);
-        await _context.SaveChangesAsync();
-        return Ok(peca);
+        var resultado = await _service.ReporEstoqueAsync(id, request.Quantidade);
+        return resultado.Sucesso ? Ok(resultado.Valor) : Responder(resultado);
     }
 
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
-        var peca = await _context.PecasInsumos.FindAsync(id);
-        if (peca is null)
-            return NotFound();
+        var resultado = await _service.RemoverAsync(id);
+        return Responder(resultado);
+    }
 
-        _context.PecasInsumos.Remove(peca);
-        await _context.SaveChangesAsync();
-        return NoContent();
+    private IActionResult Responder(ResultadoOperacao resultado)
+    {
+        return resultado.Tipo switch
+        {
+            TipoResultado.Sucesso => NoContent(),
+            TipoResultado.NaoEncontrado => NotFound(Mensagem(resultado)),
+            TipoResultado.Conflito => Conflict(Mensagem(resultado)),
+            TipoResultado.DadosInvalidos => BadRequest(Mensagem(resultado)),
+            TipoResultado.NaoAutorizado => Unauthorized(Mensagem(resultado)),
+            _ => BadRequest(Mensagem(resultado))
+        };
+    }
+
+    private static object? Mensagem(ResultadoOperacao resultado)
+    {
+        return resultado.Mensagem is null ? null : new { message = resultado.Mensagem };
     }
 }

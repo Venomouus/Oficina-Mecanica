@@ -1,11 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Oficina.API.Contracts;
-using Oficina.Domain.Entities;
-using Oficina.Domain.Enums;
-using Oficina.Domain.Validation;
-using Oficina.Infrastructure.Persistence;
+using Oficina.Application.Common;
+using Oficina.Application.Models;
+using Oficina.Application.Services;
 
 namespace Oficina.API.Controllers;
 
@@ -13,28 +11,31 @@ namespace Oficina.API.Controllers;
 [Route("api/ordens-servico")]
 public class OrdensServicoController : ControllerBase
 {
-    private readonly OficinaDbContext _context;
+    private readonly OrdemServicoService _service;
 
-    public OrdensServicoController(OficinaDbContext context) => _context = context;
+    public OrdensServicoController(OrdemServicoService service)
+    {
+        _service = service;
+    }
 
     [Authorize]
     [HttpGet]
     public async Task<IActionResult> Get()
     {
-        var ordens = await _context.OrdensServico
-            .AsNoTracking()
-            .OrderByDescending(item => item.CriadaEm)
-            .Select(item => new OrdemServicoResumoResponse(item.Id, item.Numero, item.Status.ToString(), item.ValorTotal, item.CriadaEm))
-            .ToListAsync();
-
-        return Ok(ordens);
+        var ordens = await _service.ListarResumoAsync();
+        return Ok(ordens.Select(ordem => new OrdemServicoResumoResponse(
+            ordem.Id,
+            ordem.Numero,
+            ordem.Status.ToString(),
+            ordem.ValorTotal,
+            ordem.CriadaEm)));
     }
 
     [Authorize]
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> Get(Guid id)
     {
-        var ordem = await FindOrdem(id);
+        var ordem = await _service.ObterDetalhadaAsync(id);
         return ordem is null ? NotFound() : Ok(OrdemServicoDetalheResponse.FromEntity(ordem));
     }
 
@@ -42,205 +43,90 @@ public class OrdensServicoController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Post(CriarOrdemServicoRequest request)
     {
-        if (!DocumentoValidator.IsValid(request.CpfCnpjCliente))
-            return BadRequest(new { message = "CPF/CNPJ invalido." });
+        var veiculo = new VeiculoOrdemInput(
+            request.Veiculo.Placa,
+            request.Veiculo.Marca,
+            request.Veiculo.Modelo,
+            request.Veiculo.Ano);
 
-        if (request.ServicosIds.Count == 0)
-            return BadRequest(new { message = "Informe pelo menos um servico." });
+        var pecas = request.Pecas
+            .Select(peca => new PecaOrdemInput(peca.PecaInsumoId, peca.Quantidade))
+            .ToList();
 
-        var documento = DocumentoValidator.Normalize(request.CpfCnpjCliente);
-        var cliente = await _context.Clientes.FirstOrDefaultAsync(item => item.CpfCnpj == documento);
-        if (cliente is null)
-            return NotFound(new { message = "Cliente nao encontrado." });
+        var resultado = await _service.CriarAsync(
+            request.CpfCnpjCliente,
+            veiculo,
+            request.ServicosIds,
+            pecas,
+            request.Observacoes);
 
-        var veiculo = await GetOrCreateVeiculo(request.Veiculo, cliente.Id);
-        if (veiculo is null)
-            return BadRequest(new { message = "Dados do veiculo invalidos ou vinculados a outro cliente." });
+        if (!resultado.Sucesso)
+            return Responder(resultado);
 
-        var servicos = await _context.Servicos
-            .Where(item => request.ServicosIds.Contains(item.Id) && item.Ativo)
-            .ToListAsync();
-
-        if (servicos.Count != request.ServicosIds.Distinct().Count())
-            return BadRequest(new { message = "Um ou mais servicos nao foram encontrados ou estao inativos." });
-
-        var pecasIds = request.Pecas.Select(item => item.PecaInsumoId).Distinct().ToList();
-        var pecas = await _context.PecasInsumos.Where(item => pecasIds.Contains(item.Id) && item.Ativo).ToListAsync();
-        if (pecas.Count != pecasIds.Count)
-            return BadRequest(new { message = "Uma ou mais pecas/insumos nao foram encontrados ou estao inativos." });
-
-        var ordem = new OrdemServico
-        {
-            ClienteId = cliente.Id,
-            VeiculoId = veiculo.Id,
-            Observacoes = request.Observacoes
-        };
-
-        ordem.Servicos = servicos.Select(servico => new OrdemServicoServico
-        {
-            ServicoId = servico.Id,
-            Nome = servico.Nome,
-            ValorUnitario = servico.Preco,
-            TempoEstimadoMinutos = servico.TempoEstimadoMinutos
-        }).ToList();
-
-        foreach (var item in request.Pecas)
-        {
-            var peca = pecas.Single(entity => entity.Id == item.PecaInsumoId);
-            if (peca.QuantidadeEstoque < item.Quantidade)
-                return BadRequest(new { message = $"Estoque insuficiente para {peca.Nome}." });
-
-            ordem.Pecas.Add(new OrdemServicoPeca
-            {
-                PecaInsumoId = peca.Id,
-                Nome = peca.Nome,
-                Quantidade = item.Quantidade,
-                ValorUnitario = peca.PrecoUnitario
-            });
-        }
-
-        ordem.EnviarParaAprovacao();
-        _context.OrdensServico.Add(ordem);
-        await _context.SaveChangesAsync();
-
-        var created = await FindOrdem(ordem.Id);
-        return CreatedAtAction(nameof(Get), new { id = ordem.Id }, OrdemServicoDetalheResponse.FromEntity(created!));
+        return CreatedAtAction(
+            nameof(Get),
+            new { id = resultado.Valor!.Id },
+            OrdemServicoDetalheResponse.FromEntity(resultado.Valor));
     }
 
     [Authorize]
     [HttpPatch("{id:guid}/status")]
     public async Task<IActionResult> AlterarStatus(Guid id, AlterarStatusRequest request)
     {
-        var ordem = await FindOrdem(id);
-        if (ordem is null)
-            return NotFound();
-
-        try
-        {
-            switch (request.Status)
-            {
-                case StatusOrdemServico.EmDiagnostico:
-                    ordem.IniciarDiagnostico();
-                    break;
-                case StatusOrdemServico.AguardandoAprovacao:
-                    ordem.EnviarParaAprovacao();
-                    break;
-                case StatusOrdemServico.EmExecucao:
-                    ordem.IniciarExecucao();
-                    BaixarEstoque(ordem);
-                    break;
-                case StatusOrdemServico.Finalizada:
-                    ordem.Finalizar();
-                    break;
-                case StatusOrdemServico.Entregue:
-                    ordem.Entregar();
-                    break;
-                default:
-                    return BadRequest(new { message = "Status informado nao pode ser aplicado manualmente." });
-            }
-
-            await _context.SaveChangesAsync();
-            return Ok(OrdemServicoDetalheResponse.FromEntity(ordem));
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { ex.Message });
-        }
+        var resultado = await _service.AlterarStatusAsync(id, request.Status);
+        return resultado.Sucesso
+            ? Ok(OrdemServicoDetalheResponse.FromEntity(resultado.Valor!))
+            : Responder(resultado);
     }
 
     [AllowAnonymous]
     [HttpPost("{id:guid}/aprovar")]
     public async Task<IActionResult> Aprovar(Guid id, [FromQuery] string cpfCnpj)
     {
-        var ordem = await FindOrdem(id);
-        if (ordem is null)
-            return NotFound();
-
-        if (!DocumentoValidator.IsValid(cpfCnpj) || ordem.Cliente?.CpfCnpj != DocumentoValidator.Normalize(cpfCnpj))
-            return Unauthorized(new { message = "Documento nao confere com a ordem de servico." });
-
-        try
-        {
-            ordem.Aprovar();
-            BaixarEstoque(ordem);
-            await _context.SaveChangesAsync();
-            return Ok(OrdemServicoDetalheResponse.FromEntity(ordem));
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { ex.Message });
-        }
+        var resultado = await _service.AprovarAsync(id, cpfCnpj);
+        return resultado.Sucesso
+            ? Ok(OrdemServicoDetalheResponse.FromEntity(resultado.Valor!))
+            : Responder(resultado);
     }
 
     [AllowAnonymous]
     [HttpGet("consulta/{id:guid}")]
     public async Task<IActionResult> ConsultarCliente(Guid id, [FromQuery] string cpfCnpj)
     {
-        var ordem = await FindOrdem(id);
-        if (ordem is null)
-            return NotFound();
-
-        if (!DocumentoValidator.IsValid(cpfCnpj) || ordem.Cliente?.CpfCnpj != DocumentoValidator.Normalize(cpfCnpj))
-            return Unauthorized(new { message = "Documento nao confere com a ordem de servico." });
-
-        return Ok(OrdemServicoDetalheResponse.FromEntity(ordem));
+        var resultado = await _service.ConsultarClienteAsync(id, cpfCnpj);
+        return resultado.Sucesso
+            ? Ok(OrdemServicoDetalheResponse.FromEntity(resultado.Valor!))
+            : Responder(resultado);
     }
 
     [Authorize]
     [HttpGet("metricas/tempo-medio")]
     public async Task<IActionResult> TempoMedioExecucao()
     {
-        var finalizadas = await _context.OrdensServico
-            .AsNoTracking()
-            .Where(item => item.IniciadaEm != null && item.FinalizadaEm != null)
-            .Select(item => new { item.IniciadaEm, item.FinalizadaEm })
-            .ToListAsync();
-
-        var mediaMinutos = finalizadas.Count == 0
-            ? 0
-            : finalizadas.Average(item => (item.FinalizadaEm!.Value - item.IniciadaEm!.Value).TotalMinutes);
+        var metricas = await _service.CalcularTempoMedioExecucaoAsync();
 
         return Ok(new
         {
-            quantidadeOrdensFinalizadas = finalizadas.Count,
-            tempoMedioExecucaoMinutos = Math.Round(mediaMinutos, 2)
+            quantidadeOrdensFinalizadas = metricas.QuantidadeOrdensFinalizadas,
+            tempoMedioExecucaoMinutos = metricas.TempoMedioExecucaoMinutos
         });
     }
 
-    private async Task<OrdemServico?> FindOrdem(Guid id) => await _context.OrdensServico
-        .Include(item => item.Cliente)
-        .Include(item => item.Veiculo)
-        .Include(item => item.Servicos)
-        .Include(item => item.Pecas)
-        .ThenInclude(item => item.PecaInsumo)
-        .FirstOrDefaultAsync(item => item.Id == id);
-
-    private async Task<Veiculo?> GetOrCreateVeiculo(VeiculoRequest request, Guid clienteId)
+    private IActionResult Responder(ResultadoOperacao resultado)
     {
-        if (!PlacaValidator.IsValid(request.Placa))
-            return null;
-
-        var placa = PlacaValidator.Normalize(request.Placa);
-        var veiculo = await _context.Veiculos.FirstOrDefaultAsync(item => item.Placa == placa);
-        if (veiculo is not null)
-            return veiculo.ClienteId == clienteId ? veiculo : null;
-
-        veiculo = new Veiculo
+        return resultado.Tipo switch
         {
-            ClienteId = clienteId,
-            Placa = placa,
-            Marca = request.Marca,
-            Modelo = request.Modelo,
-            Ano = request.Ano
+            TipoResultado.Sucesso => NoContent(),
+            TipoResultado.NaoEncontrado => NotFound(Mensagem(resultado)),
+            TipoResultado.Conflito => Conflict(Mensagem(resultado)),
+            TipoResultado.DadosInvalidos => BadRequest(Mensagem(resultado)),
+            TipoResultado.NaoAutorizado => Unauthorized(Mensagem(resultado)),
+            _ => BadRequest(Mensagem(resultado))
         };
-        _context.Veiculos.Add(veiculo);
-        await _context.SaveChangesAsync();
-        return veiculo;
     }
 
-    private static void BaixarEstoque(OrdemServico ordem)
+    private static object? Mensagem(ResultadoOperacao resultado)
     {
-        foreach (var item in ordem.Pecas)
-            item.PecaInsumo?.BaixarEstoque(item.Quantidade);
+        return resultado.Mensagem is null ? null : new { message = resultado.Mensagem };
     }
 }
