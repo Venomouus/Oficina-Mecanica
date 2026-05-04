@@ -7,6 +7,7 @@ namespace Oficina.Application.Interfaces
         Task<List<Veiculo>> ListarAsync();
         Task<Veiculo?> ObterPorIdAsync(Guid id);
         Task<Veiculo?> ObterPorPlacaAsync(string placa);
+        Task<bool> PossuiOrdensServicoAsync(Guid id);
         Task AdicionarAsync(Veiculo veiculo);
         void Remover(Veiculo veiculo);
         Task SalvarAlteracoesAsync();

@@ -8,6 +8,7 @@ namespace Oficina.Application.Interfaces
         Task<Cliente?> ObterPorIdAsync(Guid id);
         Task<Cliente?> ObterPorDocumentoAsync(string cpfCnpj);
         Task<bool> ExisteAsync(Guid id);
+        Task<bool> PossuiVinculosAsync(Guid id);
         Task AdicionarAsync(Cliente cliente);
         void Remover(Cliente cliente);
         Task SalvarAlteracoesAsync();

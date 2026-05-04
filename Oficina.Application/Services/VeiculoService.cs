@@ -58,6 +58,9 @@ namespace Oficina.Application.Services
             if (veiculo == null)
                 throw new Exception("Veiculo nao encontrado.");
 
+            if (await _veiculos.PossuiOrdensServicoAsync(id))
+                throw new InvalidOperationException("Nao e possivel remover um veiculo que possui ordens de servico vinculadas.");
+
             _veiculos.Remover(veiculo);
             await _veiculos.SalvarAlteracoesAsync();
         }

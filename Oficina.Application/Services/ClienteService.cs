@@ -56,6 +56,9 @@ namespace Oficina.Application.Services
             if (cliente == null)
                 throw new Exception("Cliente nao encontrado.");
 
+            if (await _clientes.PossuiVinculosAsync(id))
+                throw new InvalidOperationException("Nao e possivel remover um cliente que possui veiculos ou ordens de servico vinculadas.");
+
             _clientes.Remover(cliente);
             await _clientes.SalvarAlteracoesAsync();
         }

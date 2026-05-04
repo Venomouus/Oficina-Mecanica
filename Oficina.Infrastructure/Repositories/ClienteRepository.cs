@@ -17,12 +17,16 @@ namespace Oficina.Infrastructure.Repositories
 
         public async Task<List<Cliente>> ListarAsync()
         {
-            return await _context.Clientes.ToListAsync();
+            return await _context.Clientes
+                .Include(cliente => cliente.Veiculos)
+                .ToListAsync();
         }
 
         public async Task<Cliente?> ObterPorIdAsync(Guid id)
         {
-            return await _context.Clientes.FindAsync(id);
+            return await _context.Clientes
+                .Include(cliente => cliente.Veiculos)
+                .FirstOrDefaultAsync(cliente => cliente.Id == id);
         }
 
         public async Task<Cliente?> ObterPorDocumentoAsync(string cpfCnpj)
@@ -38,6 +42,12 @@ namespace Oficina.Infrastructure.Repositories
         public async Task<bool> ExisteAsync(Guid id)
         {
             return await _context.Clientes.AnyAsync(cliente => cliente.Id == id);
+        }
+
+        public async Task<bool> PossuiVinculosAsync(Guid id)
+        {
+            return await _context.Veiculos.AnyAsync(veiculo => veiculo.ClienteId == id)
+                || await _context.OrdensServico.AnyAsync(ordem => ordem.ClienteId == id);
         }
 
         public async Task AdicionarAsync(Cliente cliente)

@@ -29,6 +29,11 @@ namespace Oficina.Infrastructure.Repositories
             return await _context.Veiculos.FirstOrDefaultAsync(veiculo => veiculo.Placa == placa);
         }
 
+        public async Task<bool> PossuiOrdensServicoAsync(Guid id)
+        {
+            return await _context.OrdensServico.AnyAsync(ordem => ordem.VeiculoId == id);
+        }
+
         public async Task AdicionarAsync(Veiculo veiculo)
         {
             await _context.Veiculos.AddAsync(veiculo);
