@@ -8,7 +8,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__DefaultConnection: Host=db;Port=5432;Database=oficina;Username=postgres;Password=postgres
-      Jwt__Key: troque-esta-chave-em-producao-com-no-minimo-32-caracteres
+      Jwt__Key: trocar-esta-chave-em-producao-com-no-minimo-32-caracteres
       Jwt__Issuer: OficinaMecanica
       Jwt__Audience: OficinaMecanica.Admin
       Jwt__AdminUser: admin
