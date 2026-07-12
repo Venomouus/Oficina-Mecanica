@@ -5,6 +5,7 @@ on:
     branches: [ "master" ]
   pull_request:
     branches: [ "master" ]
+  workflow_dispatch:
 
 jobs:
   validate-k8s:
@@ -19,5 +20,20 @@ jobs:
         with:
           kubeconform: '0.6.7'
 
+      - name: Show repository files
+        run: |
+          pwd
+          ls -la
+          ls -la k8s
+
       - name: Validate Kubernetes manifests
-        run: kubeconform -strict -summary k8s/*.yaml
+        run: |
+          kubeconform -strict -summary \
+            k8s/namespace.yaml \
+            k8s/configmap.yaml \
+            k8s/secret.yaml \
+            k8s/postgres-deployment.yaml \
+            k8s/postgres-service.yaml \
+            k8s/api-deployment.yaml \
+            k8s/api-service.yaml \
+            k8s/hpa.yaml
