@@ -1,0 +1,71 @@
+name: CD - Deploy to Kind Kubernetes
+
+on:
+  push:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: oficina-api:k8s-health
+
+jobs:
+  deploy-kind:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore dependencies
+        run: dotnet restore OficinaMecanica.sln
+
+      - name: Build application
+        run: dotnet build OficinaMecanica.sln --configuration Release --no-restore
+
+      - name: Run tests
+        run: dotnet test Oficina.Tests/Oficina.Tests.csproj --configuration Release --no-build --verbosity normal
+
+      - name: Build Docker image
+        run: docker build --progress=plain -t ${{ env.IMAGE_NAME }} .
+
+      - name: Create Kind cluster
+        uses: helm/kind-action@v1.10.0
+        with:
+          cluster_name: oficina-ci
+
+      - name: Load Docker image into Kind
+        run: kind load docker-image ${{ env.IMAGE_NAME }} --name oficina-ci
+
+      - name: Apply Kubernetes manifests
+        run: |
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/configmap.yaml
+          kubectl apply -f k8s/secret.yaml
+          kubectl apply -f k8s/postgres-deployment.yaml
+          kubectl apply -f k8s/postgres-service.yaml
+          kubectl apply -f k8s/api-deployment.yaml
+          kubectl apply -f k8s/api-service.yaml
+          kubectl apply -f k8s/hpa.yaml
+
+      - name: Wait for PostgreSQL rollout
+        run: kubectl rollout status deployment/oficina-postgres -n oficina --timeout=180s
+
+      - name: Wait for API rollout
+        run: kubectl rollout status deployment/oficina-api -n oficina --timeout=180s
+
+      - name: Show Kubernetes resources
+        run: |
+          kubectl get pods -n oficina
+          kubectl get svc -n oficina
+          kubectl get hpa -n oficina
+
+      - name: Test API health endpoint
+        run: |
+          kubectl port-forward service/oficina-api 30081:8080 -n oficina &
+          sleep 10
+          curl --fail http://localhost:30081/health
