@@ -1,0 +1,23 @@
+name: Kubernetes Manifests
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  validate-k8s:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup kubeconform
+        uses: yokawasa/action-setup-kube-tools@v0.11.2
+        with:
+          kubeconform: '0.6.7'
+
+      - name: Validate Kubernetes manifests
+        run: kubeconform -strict -summary k8s/*.yaml
