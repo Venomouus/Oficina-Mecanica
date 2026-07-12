@@ -30,3 +30,9 @@ Desktop.ini
 
 # Docker local data
 *.env
+
+# Terraform local state
+.terraform/
+**/.terraform/
+*.tfstate
+*.tfstate.*

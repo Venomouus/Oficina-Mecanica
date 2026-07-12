@@ -1,6 +1,43 @@
-**/bin/
-**/obj/
-.vs/
+# Git and CI files
 .git/
+.github/
+
+# IDE files
+.vs/
+.idea/
+.vscode/
 *.user
 *.suo
+*.userosscache
+*.sln.docstates
+
+# Build output
+**/bin/
+**/obj/
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+coverage.cobertura.xml
+
+# Terraform/IaC files are not needed in the API image
+infra/
+**/.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+
+# Kubernetes manifests are applied by kubectl, not copied into the image
+k8s/
+
+# Documentation and reports
+*.md
+snyk-report.json
+RELATORIO_VULNERABILIDADES*
+
+# Local/env/log files
+*.env
+*.log
+Thumbs.db
+Desktop.ini
+.DS_Store

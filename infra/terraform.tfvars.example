@@ -1,0 +1,4 @@
+# Valores padrao para desenvolvimento local.
+cluster_name    = "oficina-local"
+app_image       = "oficina-api:k8s-health"
+apply_manifests = true
