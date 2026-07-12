@@ -12,10 +12,12 @@ namespace Oficina.API.Controllers;
 public class OrdensServicoController : ControllerBase
 {
     private readonly OrdemServicoService _service;
+    private readonly IConfiguration _configuration;
 
-    public OrdensServicoController(OrdemServicoService service)
+    public OrdensServicoController(OrdemServicoService service, IConfiguration configuration)
     {
         _service = service;
+        _configuration = configuration;
     }
 
     [Authorize]
@@ -26,7 +28,7 @@ public class OrdensServicoController : ControllerBase
         return Ok(ordens.Select(ordem => new OrdemServicoResumoResponse(
             ordem.Id,
             ordem.Numero,
-            ordem.Status.ToString(),
+            ordem.Status.ToDisplayName(),
             ordem.ValorTotal,
             ordem.CriadaEm)));
     }
@@ -43,6 +45,10 @@ public class OrdensServicoController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Post(CriarOrdemServicoRequest request)
     {
+        var cliente = MontarClienteDaOrdem(request);
+        if (cliente is null)
+            return BadRequest(new { message = "Informe os dados do cliente ou o CPF/CNPJ de um cliente ja cadastrado." });
+
         var veiculo = new VeiculoOrdemInput(
             request.Veiculo.Placa,
             request.Veiculo.Marca,
@@ -54,7 +60,7 @@ public class OrdensServicoController : ControllerBase
             .ToList();
 
         var resultado = await _service.CriarAsync(
-            request.CpfCnpjCliente,
+            cliente,
             veiculo,
             request.ServicosIds,
             pecas,
@@ -80,10 +86,40 @@ public class OrdensServicoController : ControllerBase
     }
 
     [AllowAnonymous]
+    [HttpGet("{id:guid}/status")]
+    public async Task<IActionResult> ConsultarStatus(Guid id, [FromQuery] string cpfCnpj)
+    {
+        var resultado = await _service.ConsultarClienteAsync(id, cpfCnpj);
+        return resultado.Sucesso
+            ? Ok(OrdemServicoDetalheResponse.StatusFromEntity(resultado.Valor!))
+            : Responder(resultado);
+    }
+
+    [AllowAnonymous]
     [HttpPost("{id:guid}/aprovar")]
     public async Task<IActionResult> Aprovar(Guid id, [FromQuery] string cpfCnpj)
     {
         var resultado = await _service.AprovarAsync(id, cpfCnpj);
+        return resultado.Sucesso
+            ? Ok(OrdemServicoDetalheResponse.FromEntity(resultado.Valor!))
+            : Responder(resultado);
+    }
+
+    [AllowAnonymous]
+    [HttpPost("orcamentos/notificacoes")]
+    public async Task<IActionResult> ReceberDecisaoOrcamento(
+        DecisaoOrcamentoRequest request,
+        [FromHeader(Name = "X-Webhook-Token")] string? token)
+    {
+        if (!TokenExternoValido(token))
+            return Unauthorized(new { message = "Token da notificacao externa invalido." });
+
+        var resultado = await _service.RegistrarDecisaoOrcamentoAsync(
+            request.OrdemServicoId,
+            request.Decisao,
+            request.CpfCnpjCliente,
+            request.Motivo);
+
         return resultado.Sucesso
             ? Ok(OrdemServicoDetalheResponse.FromEntity(resultado.Valor!))
             : Responder(resultado);
@@ -128,5 +164,27 @@ public class OrdensServicoController : ControllerBase
     private static object? Mensagem(ResultadoOperacao resultado)
     {
         return resultado.Mensagem is null ? null : new { message = resultado.Mensagem };
+    }
+
+    private static ClienteOrdemInput? MontarClienteDaOrdem(CriarOrdemServicoRequest request)
+    {
+        if (request.Cliente is not null)
+        {
+            return new ClienteOrdemInput(
+                request.Cliente.CpfCnpj,
+                request.Cliente.Nome,
+                request.Cliente.Telefone,
+                request.Cliente.Email);
+        }
+
+        return string.IsNullOrWhiteSpace(request.CpfCnpjCliente)
+            ? null
+            : new ClienteOrdemInput(request.CpfCnpjCliente, null, null, null);
+    }
+
+    private bool TokenExternoValido(string? token)
+    {
+        var tokenEsperado = _configuration["ExternalIntegrations:BudgetToken"];
+        return !string.IsNullOrWhiteSpace(tokenEsperado) && token == tokenEsperado;
     }
 }

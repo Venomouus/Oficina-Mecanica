@@ -1,4 +1,4 @@
-﻿using Oficina.Domain.Entities;
+using Oficina.Domain.Entities;
 using Oficina.Domain.Enums;
 using Xunit;
 
@@ -79,6 +79,22 @@ public class OrdemServicoTests
         var ordem = CriarOrdem();
 
         Assert.Throws<InvalidOperationException>(() => ordem.Entregar());
+    }
+
+
+    [Fact]
+    public void RecusarOrcamento_DeveRegistrarDecisaoSemMoverParaExecucao()
+    {
+        var ordem = CriarOrdem();
+        ordem.EnviarParaAprovacao();
+
+        ordem.RecusarOrcamento("Cliente achou caro");
+
+        Assert.Equal(StatusOrdemServico.AguardandoAprovacao, ordem.Status);
+        Assert.False(ordem.OrcamentoAprovado);
+        Assert.NotNull(ordem.OrcamentoRespondidoEm);
+        Assert.Equal("Cliente achou caro", ordem.MotivoRecusaOrcamento);
+        Assert.Throws<InvalidOperationException>(() => ordem.IniciarExecucao());
     }
 
     private static OrdemServico CriarOrdem()

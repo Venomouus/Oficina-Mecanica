@@ -31,7 +31,7 @@ namespace Oficina.Application.Services
 
         public async Task<List<OrdemServicoResumo>> ListarResumoAsync()
         {
-            return await _ordens.ListarResumoAsync();
+            return await _ordens.ListarFilaOperacionalAsync();
         }
 
         public async Task<OrdemServico?> ObterDetalhadaAsync(Guid id)
@@ -40,22 +40,23 @@ namespace Oficina.Application.Services
         }
 
         public async Task<ResultadoOperacao<OrdemServico>> CriarAsync(
-            string cpfCnpjCliente,
+            ClienteOrdemInput clienteInput,
             VeiculoOrdemInput veiculoInput,
             List<Guid> servicosIds,
             List<PecaOrdemInput> pecasInput,
             string? observacoes)
         {
-            if (!DocumentoValidator.IsValid(cpfCnpjCliente))
+            if (!DocumentoValidator.IsValid(clienteInput.CpfCnpj))
                 return ResultadoOperacao<OrdemServico>.DadosInvalidos("CPF/CNPJ invalido.");
 
             if (servicosIds.Count == 0)
                 return ResultadoOperacao<OrdemServico>.DadosInvalidos("Informe pelo menos um servico.");
 
-            var documento = DocumentoValidator.Normalize(cpfCnpjCliente);
-            var cliente = await _clientes.ObterPorDocumentoAsync(documento);
-            if (cliente is null)
-                return ResultadoOperacao<OrdemServico>.NaoEncontrado("Cliente nao encontrado.");
+            var clienteResult = await ObterOuCriarClienteAsync(clienteInput);
+            if (!clienteResult.Sucesso)
+                return ResultadoOperacao<OrdemServico>.DadosInvalidos(clienteResult.Mensagem ?? "Dados do cliente invalidos.");
+
+            var cliente = clienteResult.Valor!;
 
             var veiculo = await ObterOuCriarVeiculoAsync(veiculoInput, cliente.Id);
             if (veiculo is null)
@@ -164,6 +165,44 @@ namespace Oficina.Application.Services
             }
         }
 
+        public async Task<ResultadoOperacao<OrdemServico>> RegistrarDecisaoOrcamentoAsync(
+            Guid id,
+            string decisao,
+            string cpfCnpj,
+            string? motivo)
+        {
+            var ordem = await _ordens.ObterDetalhadaAsync(id);
+            if (ordem is null)
+                return ResultadoOperacao<OrdemServico>.NaoEncontrado();
+
+            if (!DocumentoValidator.IsValid(cpfCnpj) || ordem.Cliente?.CpfCnpj != DocumentoValidator.Normalize(cpfCnpj))
+                return ResultadoOperacao<OrdemServico>.NaoAutorizado("Documento nao confere com a ordem de servico.");
+
+            try
+            {
+                if (DecisaoAprovaOrcamento(decisao))
+                {
+                    ordem.Aprovar();
+                    BaixarEstoque(ordem);
+                }
+                else if (DecisaoRecusaOrcamento(decisao))
+                {
+                    ordem.RecusarOrcamento(motivo);
+                }
+                else
+                {
+                    return ResultadoOperacao<OrdemServico>.DadosInvalidos("Informe decisao como aprovado ou recusado.");
+                }
+
+                await _ordens.SalvarAlteracoesAsync();
+                return ResultadoOperacao<OrdemServico>.Ok(ordem);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return ResultadoOperacao<OrdemServico>.DadosInvalidos(ex.Message);
+            }
+        }
+
         public async Task<ResultadoOperacao<OrdemServico>> ConsultarClienteAsync(Guid id, string cpfCnpj)
         {
             var ordem = await _ordens.ObterDetalhadaAsync(id);
@@ -179,6 +218,28 @@ namespace Oficina.Application.Services
         public async Task<TempoMedioExecucao> CalcularTempoMedioExecucaoAsync()
         {
             return await _ordens.CalcularTempoMedioExecucaoAsync();
+        }
+
+        private async Task<ResultadoOperacao<Cliente>> ObterOuCriarClienteAsync(ClienteOrdemInput input)
+        {
+            var documento = DocumentoValidator.Normalize(input.CpfCnpj);
+            var cliente = await _clientes.ObterPorDocumentoAsync(documento);
+            if (cliente is not null)
+                return ResultadoOperacao<Cliente>.Ok(cliente);
+
+            if (string.IsNullOrWhiteSpace(input.Nome))
+                return ResultadoOperacao<Cliente>.DadosInvalidos("Informe os dados do cliente para abrir uma OS nova.");
+
+            cliente = new Cliente(
+                input.Nome.Trim(),
+                documento,
+                input.Telefone?.Trim() ?? string.Empty,
+                input.Email?.Trim() ?? string.Empty);
+
+            await _clientes.AdicionarAsync(cliente);
+            await _clientes.SalvarAlteracoesAsync();
+
+            return ResultadoOperacao<Cliente>.Ok(cliente);
         }
 
         private async Task<Veiculo?> ObterOuCriarVeiculoAsync(VeiculoOrdemInput input, Guid clienteId)
@@ -202,6 +263,20 @@ namespace Oficina.Application.Services
         {
             foreach (var item in ordem.Pecas)
                 item.PecaInsumo?.BaixarEstoque(item.Quantidade);
+        }
+
+        private static bool DecisaoAprovaOrcamento(string decisao)
+        {
+            return string.Equals(decisao, "aprovado", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(decisao, "aprovada", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(decisao, "aprovar", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool DecisaoRecusaOrcamento(string decisao)
+        {
+            return string.Equals(decisao, "recusado", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(decisao, "recusada", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(decisao, "recusar", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

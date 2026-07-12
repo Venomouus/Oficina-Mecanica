@@ -1,4 +1,5 @@
 using Oficina.Domain.Entities;
+using Oficina.Domain.Enums;
 using Oficina.Domain.Validation;
 
 namespace Oficina.API.Contracts;
@@ -30,6 +31,17 @@ public record ClienteResponse(
 
 public record OrdemServicoResumoResponse(Guid Id, string Numero, string Status, decimal ValorTotal, DateTime CriadaEm);
 
+public record OrdemServicoStatusResponse(
+    Guid Id,
+    string Numero,
+    string Status,
+    bool? OrcamentoAprovado,
+    DateTime CriadaEm,
+    DateTime? OrcamentoRespondidoEm,
+    DateTime? IniciadaEm,
+    DateTime? FinalizadaEm,
+    DateTime? EntregueEm);
+
 public record OrdemServicoDetalheResponse(
     Guid Id,
     string Numero,
@@ -40,6 +52,9 @@ public record OrdemServicoDetalheResponse(
     DateTime? IniciadaEm,
     DateTime? FinalizadaEm,
     DateTime? EntregueEm,
+    bool? OrcamentoAprovado,
+    DateTime? OrcamentoRespondidoEm,
+    string? MotivoRecusaOrcamento,
     object Cliente,
     object Veiculo,
     IEnumerable<object> Servicos,
@@ -48,17 +63,48 @@ public record OrdemServicoDetalheResponse(
     public static OrdemServicoDetalheResponse FromEntity(OrdemServico os) => new(
         os.Id,
         os.Numero,
-        os.Status.ToString(),
+        os.Status.ToDisplayName(),
         os.ValorTotal,
         os.CriadaEm,
         os.AprovadaEm,
         os.IniciadaEm,
         os.FinalizadaEm,
         os.EntregueEm,
+        os.OrcamentoAprovado,
+        os.OrcamentoRespondidoEm,
+        os.MotivoRecusaOrcamento,
         new { os.ClienteId, os.Cliente?.Nome, CpfCnpj = DocumentoFormatter.Format(os.Cliente?.CpfCnpj) },
         new { os.VeiculoId, os.Veiculo?.Placa, os.Veiculo?.Marca, os.Veiculo?.Modelo, os.Veiculo?.Ano },
         os.Servicos.Select(item => new { item.ServicoId, item.Nome, item.ValorUnitario, item.TempoEstimadoMinutos }),
         os.Pecas.Select(item => new { item.PecaInsumoId, item.Nome, item.Quantidade, item.ValorUnitario, Total = item.Quantidade * item.ValorUnitario }));
+
+    public static OrdemServicoStatusResponse StatusFromEntity(OrdemServico os) => new(
+        os.Id,
+        os.Numero,
+        os.Status.ToDisplayName(),
+        os.OrcamentoAprovado,
+        os.CriadaEm,
+        os.OrcamentoRespondidoEm,
+        os.IniciadaEm,
+        os.FinalizadaEm,
+        os.EntregueEm);
+}
+
+public static class StatusOrdemServicoExtensions
+{
+    public static string ToDisplayName(this StatusOrdemServico status)
+    {
+        return status switch
+        {
+            StatusOrdemServico.Recebida => "Recebida",
+            StatusOrdemServico.EmDiagnostico => "Diagnostico",
+            StatusOrdemServico.AguardandoAprovacao => "Aguardando Aprovacao",
+            StatusOrdemServico.EmExecucao => "Execucao",
+            StatusOrdemServico.Finalizada => "Finalizada",
+            StatusOrdemServico.Entregue => "Entregue",
+            _ => status.ToString()
+        };
+    }
 }
 
 public static class DocumentoFormatter

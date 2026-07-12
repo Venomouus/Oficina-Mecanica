@@ -1,4 +1,4 @@
-﻿using Oficina.Domain.Enums;
+using Oficina.Domain.Enums;
 
 namespace Oficina.Domain.Entities
 {
@@ -21,6 +21,9 @@ namespace Oficina.Domain.Entities
         public DateTime? IniciadaEm { get; private set; }
         public DateTime? FinalizadaEm { get; private set; }
         public DateTime? EntregueEm { get; private set; }
+        public bool? OrcamentoAprovado { get; private set; }
+        public DateTime? OrcamentoRespondidoEm { get; private set; }
+        public string? MotivoRecusaOrcamento { get; private set; }
 
         public string? Observacoes { get; private set; }
 
@@ -74,6 +77,9 @@ namespace Oficina.Domain.Entities
         {
             CalcularOrcamento();
 
+            OrcamentoAprovado = null;
+            OrcamentoRespondidoEm = null;
+            MotivoRecusaOrcamento = null;
             Status = StatusOrdemServico.AguardandoAprovacao;
         }
 
@@ -81,9 +87,23 @@ namespace Oficina.Domain.Entities
         {
             GarantirStatus(StatusOrdemServico.AguardandoAprovacao);
 
+            OrcamentoAprovado = true;
+            OrcamentoRespondidoEm = DateTime.UtcNow;
+            MotivoRecusaOrcamento = null;
             AprovadaEm = DateTime.UtcNow;
             IniciadaEm = DateTime.UtcNow;
             Status = StatusOrdemServico.EmExecucao;
+        }
+
+        public void RecusarOrcamento(string? motivo)
+        {
+            GarantirStatus(StatusOrdemServico.AguardandoAprovacao);
+
+            OrcamentoAprovado = false;
+            OrcamentoRespondidoEm = DateTime.UtcNow;
+            MotivoRecusaOrcamento = string.IsNullOrWhiteSpace(motivo)
+                ? null
+                : motivo.Trim();
         }
 
         public void IniciarExecucao()
@@ -92,7 +112,14 @@ namespace Oficina.Domain.Entities
                 throw new InvalidOperationException("A OS precisa estar em diagnostico ou aguardando aprovacao para iniciar a execucao.");
 
             if (Status == StatusOrdemServico.AguardandoAprovacao)
+            {
+                if (OrcamentoAprovado == false)
+                    throw new InvalidOperationException("O orcamento desta OS foi recusado pelo cliente.");
+
+                OrcamentoAprovado ??= true;
+                OrcamentoRespondidoEm ??= DateTime.UtcNow;
                 AprovadaEm ??= DateTime.UtcNow;
+            }
 
             IniciadaEm = DateTime.UtcNow;
             Status = StatusOrdemServico.EmExecucao;

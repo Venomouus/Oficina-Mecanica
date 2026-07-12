@@ -13,6 +13,7 @@ services:
       Jwt__Audience: OficinaMecanica.Admin
       Jwt__AdminUser: admin
       Jwt__AdminPassword: Admin@123
+      ExternalIntegrations__BudgetToken: token-dev-orcamento
     ports:
       - "8080:8080"
     depends_on:

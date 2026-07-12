@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Oficina.Application.Interfaces;
 using Oficina.Application.Models;
 using Oficina.Domain.Entities;
+using Oficina.Domain.Enums;
 using Oficina.Infrastructure.Persistence;
 
 namespace Oficina.Infrastructure.Repositories
@@ -20,6 +21,37 @@ namespace Oficina.Infrastructure.Repositories
             return await _context.OrdensServico
                 .AsNoTracking()
                 .OrderByDescending(ordem => ordem.CriadaEm)
+                .Select(ordem => new OrdemServicoResumo(
+                    ordem.Id,
+                    ordem.Numero,
+                    ordem.Status,
+                    ordem.ValorTotal,
+                    ordem.CriadaEm))
+                .ToListAsync();
+        }
+
+        public async Task<List<OrdemServicoResumo>> ListarFilaOperacionalAsync()
+        {
+            return await _context.OrdensServico
+                .AsNoTracking()
+                .Where(ordem =>
+                    ordem.Status != StatusOrdemServico.Finalizada &&
+                    ordem.Status != StatusOrdemServico.Entregue)
+                .Select(ordem => new
+                {
+                    ordem.Id,
+                    ordem.Numero,
+                    ordem.Status,
+                    ordem.ValorTotal,
+                    ordem.CriadaEm,
+                    Prioridade = ordem.Status == StatusOrdemServico.EmExecucao ? 1
+                        : ordem.Status == StatusOrdemServico.AguardandoAprovacao ? 2
+                        : ordem.Status == StatusOrdemServico.EmDiagnostico ? 3
+                        : ordem.Status == StatusOrdemServico.Recebida ? 4
+                        : 99
+                })
+                .OrderBy(ordem => ordem.Prioridade)
+                .ThenBy(ordem => ordem.CriadaEm)
                 .Select(ordem => new OrdemServicoResumo(
                     ordem.Id,
                     ordem.Numero,

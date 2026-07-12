@@ -24,6 +24,12 @@ public record VeiculoOrdemServicoRequest(
     [Required, MaxLength(80)] string Modelo,
     [Range(1900, 2100)] int Ano);
 
+public record ClienteOrdemServicoRequest(
+    [Required, MaxLength(160)] string Nome,
+    [Required, MaxLength(18)] string CpfCnpj,
+    [MaxLength(30)] string? Telefone,
+    [EmailAddress, MaxLength(160)] string? Email);
+
 public record ServicoRequest(
     [Required, MaxLength(120)] string Nome,
     [MaxLength(500)] string Descricao,
@@ -42,12 +48,19 @@ public record PecaInsumoRequest(
 public record ReporEstoqueRequest([Range(1, 1000000)] int Quantidade);
 
 public record CriarOrdemServicoRequest(
-    [Required, MaxLength(18)] string CpfCnpjCliente,
-    VeiculoOrdemServicoRequest Veiculo,
-    List<Guid> ServicosIds,
-    List<PecaOrdemRequest> Pecas,
+    ClienteOrdemServicoRequest? Cliente,
+    [MaxLength(18)] string? CpfCnpjCliente,
+    [Required] VeiculoOrdemServicoRequest Veiculo,
+    [Required] List<Guid> ServicosIds,
+    [Required] List<PecaOrdemRequest> Pecas,
     [MaxLength(1000)] string? Observacoes);
 
 public record PecaOrdemRequest([Required] Guid PecaInsumoId, [Range(1, 100000)] int Quantidade);
 
 public record AlterarStatusRequest([Required] StatusOrdemServico Status);
+
+public record DecisaoOrcamentoRequest(
+    [Required] Guid OrdemServicoId,
+    [Required, MaxLength(20)] string Decisao,
+    [Required, MaxLength(18)] string CpfCnpjCliente,
+    [MaxLength(500)] string? Motivo);

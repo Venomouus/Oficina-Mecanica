@@ -145,6 +145,9 @@ namespace Oficina.Infrastructure.Persistence
                 entity.Property(ordem => ordem.Observacoes)
                     .HasMaxLength(1000);
 
+                entity.Property(ordem => ordem.MotivoRecusaOrcamento)
+                    .HasMaxLength(500);
+
                 entity.HasIndex(ordem => ordem.Numero)
                     .IsUnique();
 

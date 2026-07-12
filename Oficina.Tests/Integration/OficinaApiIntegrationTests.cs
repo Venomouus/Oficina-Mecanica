@@ -35,18 +35,22 @@ public class OficinaApiIntegrationTests : IClassFixture<OficinaApiFactory>
     }
 
     [Fact]
-    public async Task CriarOrdemServico_ComDadosValidos_DeveRetornarCreated()
+    public async Task CriarOrdemServico_ComClienteVeiculoServicosEPecas_DeveRetornarCreated()
     {
-        var token = await LoginAsync();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        await AutenticarAsync();
 
-        var clienteId = await CriarClienteAsync();
         var servicoId = await CriarServicoAsync();
         var pecaId = await CriarPecaAsync();
 
         var response = await _client.PostAsJsonAsync("/api/ordens-servico", new
         {
-            cpfCnpjCliente = "123.456.789-09",
+            cliente = new
+            {
+                nome = "Cliente Integracao",
+                cpfCnpj = "123.456.789-09",
+                telefone = "11999999999",
+                email = "integracao@teste.com"
+            },
             veiculo = new
             {
                 placa = "DDD1234",
@@ -69,10 +73,87 @@ public class OficinaApiIntegrationTests : IClassFixture<OficinaApiFactory>
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
         using var body = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync());
-        Assert.Equal("AguardandoAprovacao", body.RootElement.GetProperty("status").GetString());
+        Assert.Equal("Aguardando Aprovacao", body.RootElement.GetProperty("status").GetString());
         Assert.Equal(160, body.RootElement.GetProperty("valorTotal").GetDecimal());
+        Assert.False(string.IsNullOrWhiteSpace(body.RootElement.GetProperty("numero").GetString()));
+    }
 
-        _ = clienteId;
+    [Fact]
+    public async Task ConsultarStatus_DeveRetornarSituacaoAtualDaOrdem()
+    {
+        var ordem = await CriarOrdemCompletaAsync("ABC1D23");
+
+        var response = await _client.GetAsync($"/api/ordens-servico/{ordem.Id}/status?cpfCnpj=123.456.789-09");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        using var body = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync());
+        Assert.Equal(ordem.Id, body.RootElement.GetProperty("id").GetGuid());
+        Assert.Equal("Aguardando Aprovacao", body.RootElement.GetProperty("status").GetString());
+    }
+
+    [Fact]
+    public async Task NotificacaoExterna_DeveRegistrarRecusaDoOrcamento()
+    {
+        var ordem = await CriarOrdemCompletaAsync("REC1D23");
+
+        var request = new HttpRequestMessage(HttpMethod.Post, "/api/ordens-servico/orcamentos/notificacoes")
+        {
+            Content = JsonContent.Create(new
+            {
+                ordemServicoId = ordem.Id,
+                decisao = "recusado",
+                cpfCnpjCliente = "123.456.789-09",
+                motivo = "Cliente vai avaliar depois"
+            })
+        };
+        request.Headers.Add("X-Webhook-Token", "token-dev-orcamento");
+
+        var response = await _client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        using var body = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync());
+        Assert.Equal("Aguardando Aprovacao", body.RootElement.GetProperty("status").GetString());
+        Assert.False(body.RootElement.GetProperty("orcamentoAprovado").GetBoolean());
+        Assert.Equal("Cliente vai avaliar depois", body.RootElement.GetProperty("motivoRecusaOrcamento").GetString());
+    }
+
+    [Fact]
+    public async Task NotificacaoExterna_Aprovada_DeveBaixarEstoqueDasPecas()
+    {
+        var ordem = await CriarOrdemCompletaAsync("APR1D23", quantidadePeca: 2);
+
+        var request = new HttpRequestMessage(HttpMethod.Post, "/api/ordens-servico/orcamentos/notificacoes")
+        {
+            Content = JsonContent.Create(new
+            {
+                ordemServicoId = ordem.Id,
+                decisao = "aprovado",
+                cpfCnpjCliente = "123.456.789-09"
+            })
+        };
+        request.Headers.Add("X-Webhook-Token", "token-dev-orcamento");
+
+        var response = await _client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        using var ordemBody = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync());
+        Assert.Equal("Execucao", ordemBody.RootElement.GetProperty("status").GetString());
+        Assert.True(ordemBody.RootElement.GetProperty("orcamentoAprovado").GetBoolean());
+
+        var peca = await _client.GetAsync($"/api/pecas-insumos/{ordem.PecaId}");
+        peca.EnsureSuccessStatusCode();
+
+        using var pecaBody = await JsonDocument.ParseAsync(await peca.Content.ReadAsStreamAsync());
+        Assert.Equal(3, pecaBody.RootElement.GetProperty("quantidadeEstoque").GetInt32());
+    }
+
+    private async Task AutenticarAsync()
+    {
+        var token = await LoginAsync();
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
     }
 
     private async Task<string> LoginAsync()
@@ -89,20 +170,45 @@ public class OficinaApiIntegrationTests : IClassFixture<OficinaApiFactory>
         return body.RootElement.GetProperty("accessToken").GetString()!;
     }
 
-    private async Task<Guid> CriarClienteAsync()
+    private async Task<(Guid Id, Guid PecaId)> CriarOrdemCompletaAsync(string placa, int quantidadePeca = 1)
     {
-        var response = await _client.PostAsJsonAsync("/api/clientes", new
+        await AutenticarAsync();
+
+        var servicoId = await CriarServicoAsync();
+        var pecaId = await CriarPecaAsync();
+
+        var response = await _client.PostAsJsonAsync("/api/ordens-servico", new
         {
-            nome = "Cliente Integracao",
-            cpfCnpj = "123.456.789-09",
-            telefone = "11999999999",
-            email = "integracao@teste.com"
+            cliente = new
+            {
+                nome = "Cliente Integracao",
+                cpfCnpj = "123.456.789-09",
+                telefone = "11999999999",
+                email = "integracao@teste.com"
+            },
+            veiculo = new
+            {
+                placa,
+                marca = "Renault",
+                modelo = "Kwid",
+                ano = 2026
+            },
+            servicosIds = new[] { servicoId },
+            pecas = new[]
+            {
+                new
+                {
+                    pecaInsumoId = pecaId,
+                    quantidade = quantidadePeca
+                }
+            },
+            observacoes = "Teste de integracao"
         });
 
         response.EnsureSuccessStatusCode();
 
         using var body = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync());
-        return body.RootElement.GetProperty("id").GetGuid();
+        return (body.RootElement.GetProperty("id").GetGuid(), pecaId);
     }
 
     private async Task<Guid> CriarServicoAsync()
