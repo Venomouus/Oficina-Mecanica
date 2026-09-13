@@ -137,6 +137,10 @@ namespace Oficina.Application.Services
                 await _ordens.SalvarAlteracoesAsync();
                 return ResultadoOperacao<OrdemServico>.Ok(ordem);
             }
+            catch (ConflitoConcorrenciaException ex)
+            {
+                return ResultadoOperacao<OrdemServico>.Conflito(ex.Message);
+            }
             catch (InvalidOperationException ex)
             {
                 return ResultadoOperacao<OrdemServico>.DadosInvalidos(ex.Message);
@@ -158,6 +162,10 @@ namespace Oficina.Application.Services
                 BaixarEstoque(ordem);
                 await _ordens.SalvarAlteracoesAsync();
                 return ResultadoOperacao<OrdemServico>.Ok(ordem);
+            }
+            catch (ConflitoConcorrenciaException ex)
+            {
+                return ResultadoOperacao<OrdemServico>.Conflito(ex.Message);
             }
             catch (InvalidOperationException ex)
             {
@@ -196,6 +204,10 @@ namespace Oficina.Application.Services
 
                 await _ordens.SalvarAlteracoesAsync();
                 return ResultadoOperacao<OrdemServico>.Ok(ordem);
+            }
+            catch (ConflitoConcorrenciaException ex)
+            {
+                return ResultadoOperacao<OrdemServico>.Conflito(ex.Message);
             }
             catch (InvalidOperationException ex)
             {

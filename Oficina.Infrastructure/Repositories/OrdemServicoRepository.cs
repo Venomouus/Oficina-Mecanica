@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
+using Oficina.Application.Common;
 using Oficina.Application.Interfaces;
 using Oficina.Application.Models;
 using Oficina.Domain.Entities;
@@ -67,6 +69,7 @@ namespace Oficina.Infrastructure.Repositories
                 .Include(ordem => ordem.Cliente)
                 .Include(ordem => ordem.Veiculo)
                 .Include(ordem => ordem.Servicos)
+                .Include(ordem => ordem.HistoricoStatus)
                 .Include(ordem => ordem.Pecas)
                 .ThenInclude(peca => peca.PecaInsumo)
                 .FirstOrDefaultAsync(ordem => ordem.Id == id);
@@ -94,7 +97,19 @@ namespace Oficina.Infrastructure.Repositories
 
         public async Task SalvarAlteracoesAsync()
         {
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                throw new ConflitoConcorrenciaException("A OS foi alterada por outra requisicao. Consulte novamente antes de repetir a operacao.", ex);
+            }
+            catch (DbUpdateException ex) when (ex.InnerException is PostgresException
+                { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: "IX_HistoricoStatusOrdemServico_OrdemServicoId_Sequencia" })
+            {
+                throw new ConflitoConcorrenciaException("O historico da OS foi alterado por outra requisicao. Consulte novamente antes de repetir a operacao.", ex);
+            }
         }
     }
 }
