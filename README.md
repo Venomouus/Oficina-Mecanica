@@ -123,7 +123,7 @@ Os valores de `secret.yaml` sao apenas para ambiente local e demonstracao. Em pr
 1. O GitHub Actions executa restore, build e testes da solucao .NET.
 2. A imagem Docker da API e criada.
 3. Os manifests Kubernetes sao validados.
-4. O workflow `CD - Deploy to Kind Kubernetes` cria um cluster kind temporario.
+4. O workflow `CI - Kind Integration` cria um cluster kind temporario.
 5. A imagem Docker e carregada no cluster.
 6. Os manifests de banco, API, Services, ConfigMap, Secret e HPA sao aplicados.
 7. O pipeline aguarda o rollout do PostgreSQL e da API.
@@ -184,9 +184,52 @@ Arquivos principais:
 Workflows em `.github/workflows`:
 
 - `dotnet.yml`: build e testes automatizados.
-- `docker-image.yml`: build e publicacao da imagem Docker no GitHub Container Registry.
+- `docker-image.yml`: build da imagem Docker em PRs; publicacao no GitHub Container Registry condicionada a `DEPLOY_ENABLED=true` em pushes para `develop` ou `master`.
 - `main.yml`: validacao dos manifests Kubernetes com kubeconform.
 - `deploy-kind.yml`: cria cluster kind temporario no GitHub Actions, aplica manifests e valida `/health`.
+
+### Preparacao do CI para homologacao e producao
+
+Os quatro workflows executam em pushes para `develop` e `master`, em Pull Requests
+com destino a essas branches e por acionamento manual (`workflow_dispatch`).
+Uma branch `feature/*` executa o CI automaticamente ao abrir ou atualizar seu PR.
+
+Fluxo de contribuicao:
+
+```text
+develop -> feature/* -> PR para develop -> PR para master
+```
+
+Ambientes GitHub preparados para o futuro deploy AWS:
+
+| Ambiente | Branch autorizada |
+|---|---|
+| `staging` | `develop` |
+| `producao` | `master` |
+
+Em **Settings > Secrets and variables > Actions > Variables**, configure a
+variavel de repositorio `DEPLOY_ENABLED` com valor `false` durante o desenvolvimento.
+Com esse valor (ou com a variavel ausente), o CI continua executando build, testes,
+validacao dos manifests e integracao em kind, mas nao faz login nem publica imagens
+no GHCR. O kind e temporario, existe apenas no runner e nao utiliza AWS.
+
+Com `DEPLOY_ENABLED=true`, o workflow Docker publica em pushes para `develop` e
+`master`, usando a tag do commit e, respectivamente, `develop` ou `latest`.
+PRs e execucoes manuais nunca publicam imagens. Essa publicacao ainda nao realiza
+deploy AWS: a infraestrutura, os jobs de deploy, o OIDC e o uso dos ambientes nos
+jobs serao implementados na etapa de nuvem. Alterar a variavel sozinha nao cria EKS
+nem RDS e nao entrega um deploy em homologacao ou producao.
+
+Depois da primeira execucao bem-sucedida do PR, configure protecao de `develop` e
+`master` exigindo Pull Request e estes checks (nomes dos jobs exibidos no GitHub):
+
+- `build-test`: build e testes .NET.
+- `validate-k8s`: validacao dos manifests com kubeconform.
+- `docker`: build do Dockerfile.
+- `deploy-kind`: integracao em Kubernetes temporario e verificacao de `/health`.
+
+Bloqueie force push e exclusao das branches e aplique as regras tambem aos
+administradores. Se houver outro integrante disponivel, exija uma aprovacao.
 
 ### Collection / Swagger
 
