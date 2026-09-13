@@ -1,4 +1,5 @@
 using Oficina.Application.Interfaces;
+using Oficina.Application.Common;
 using Oficina.Domain.Entities;
 using Oficina.Domain.Validation;
 
@@ -47,6 +48,17 @@ namespace Oficina.Application.Services
             cliente.Atualizar(nome, telefone, email);
 
             await _clientes.SalvarAlteracoesAsync();
+        }
+
+        public async Task<ResultadoOperacao<Cliente>> AlterarStatusAsync(Guid id, bool ativo)
+        {
+            var cliente = await _clientes.ObterPorIdAsync(id);
+            if (cliente is null)
+                return ResultadoOperacao<Cliente>.NaoEncontrado();
+
+            cliente.AlterarStatus(ativo);
+            await _clientes.SalvarAlteracoesAsync();
+            return ResultadoOperacao<Cliente>.Ok(cliente);
         }
 
         public async Task RemoverAsync(Guid id)

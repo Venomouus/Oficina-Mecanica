@@ -66,6 +66,14 @@ public class ClientesController : ControllerBase
         return NoContent();
     }
 
+    [Authorize(Roles = "Admin")]
+    [HttpPatch("{id:guid}/status")]
+    public async Task<IActionResult> AlterarStatus(Guid id, AlterarStatusClienteRequest request)
+    {
+        var resultado = await _service.AlterarStatusAsync(id, request.Ativo!.Value);
+        return resultado.Sucesso ? Ok(ClienteResponse.FromEntity(resultado.Valor!)) : NotFound();
+    }
+
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id)
     {
