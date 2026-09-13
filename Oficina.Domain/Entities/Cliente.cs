@@ -1,5 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
-
 namespace Oficina.Domain.Entities
 {
     public class Cliente
@@ -9,6 +7,7 @@ namespace Oficina.Domain.Entities
         public string CpfCnpj { get; private set; } = string.Empty;
         public string Telefone { get; private set; } = string.Empty;
         public string Email { get; private set; } = string.Empty;
+        public bool Ativo { get; private set; } = true;
 
         public List<Veiculo> Veiculos { get; private set; } = [];
 
@@ -28,5 +27,7 @@ namespace Oficina.Domain.Entities
             Telefone = telefone;
             Email = email;
         }
+
+        public void AlterarStatus(bool ativo) => Ativo = ativo;
     }
 }

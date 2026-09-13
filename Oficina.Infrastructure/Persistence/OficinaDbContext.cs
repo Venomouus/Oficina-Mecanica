@@ -17,6 +17,7 @@ namespace Oficina.Infrastructure.Persistence
         public DbSet<OrdemServico> OrdensServico => Set<OrdemServico>();
         public DbSet<OrdemServicoItem> OrdemServicoItens => Set<OrdemServicoItem>();
         public DbSet<OrdemServicoPeca> OrdemServicoPecas => Set<OrdemServicoPeca>();
+        public DbSet<HistoricoStatusOrdemServico> HistoricosStatusOrdemServico => Set<HistoricoStatusOrdemServico>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -29,6 +30,7 @@ namespace Oficina.Infrastructure.Persistence
             ConfigurarOrdemServico(modelBuilder);
             ConfigurarOrdemServicoItem(modelBuilder);
             ConfigurarOrdemServicoPeca(modelBuilder);
+            ConfigurarHistoricoStatus(modelBuilder);
         }
 
         private static void ConfigurarCliente(ModelBuilder modelBuilder)
@@ -50,6 +52,10 @@ namespace Oficina.Infrastructure.Persistence
 
                 entity.Property(cliente => cliente.Email)
                     .HasMaxLength(160);
+
+                entity.Property(cliente => cliente.Ativo)
+                    .HasDefaultValue(true)
+                    .HasSentinel(true);
 
                 entity.HasIndex(cliente => cliente.CpfCnpj)
                     .IsUnique();
@@ -139,6 +145,15 @@ namespace Oficina.Infrastructure.Persistence
                     .HasMaxLength(30)
                     .IsRequired();
 
+                entity.Property(ordem => ordem.Versao).IsConcurrencyToken();
+                entity.HasMany(ordem => ordem.HistoricoStatus)
+                    .WithOne()
+                    .HasForeignKey(periodo => periodo.OrdemServicoId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                entity.Navigation(ordem => ordem.HistoricoStatus)
+                    .HasField("_historicoStatus")
+                    .UsePropertyAccessMode(PropertyAccessMode.Field);
+
                 entity.Property(ordem => ordem.ValorTotal)
                     .HasPrecision(12, 2);
 
@@ -160,6 +175,24 @@ namespace Oficina.Infrastructure.Persistence
                     .WithMany()
                     .HasForeignKey(ordem => ordem.VeiculoId)
                     .OnDelete(DeleteBehavior.Restrict);
+            });
+        }
+
+        private static void ConfigurarHistoricoStatus(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<HistoricoStatusOrdemServico>(entity =>
+            {
+                entity.ToTable("HistoricoStatusOrdemServico", table =>
+                {
+                    table.HasCheckConstraint("CK_HistoricoStatus_Sequencia", "\"Sequencia\" > 0");
+                    table.HasCheckConstraint("CK_HistoricoStatus_Periodo",
+                        "\"FinalizadaEm\" IS NULL OR \"FinalizadaEm\" >= COALESCE(\"IniciadaEm\", \"RegistradaEm\")");
+                });
+                entity.HasKey(periodo => periodo.Id);
+                entity.Property(periodo => periodo.Id).ValueGeneratedNever();
+                entity.Property(periodo => periodo.Status).HasConversion<string>().HasMaxLength(30).IsRequired();
+                entity.HasIndex(periodo => new { periodo.OrdemServicoId, periodo.Sequencia }).IsUnique();
+                entity.HasIndex(periodo => new { periodo.Status, periodo.IniciadaEm });
             });
         }
 

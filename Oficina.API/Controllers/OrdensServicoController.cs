@@ -41,6 +41,16 @@ public class OrdensServicoController : ControllerBase
         return ordem is null ? NotFound() : Ok(OrdemServicoDetalheResponse.FromEntity(ordem));
     }
 
+    [Authorize(Roles = "Admin")]
+    [HttpGet("{id:guid}/historico")]
+    public async Task<IActionResult> Historico(Guid id)
+    {
+        var ordem = await _service.ObterDetalhadaAsync(id);
+        return ordem is null
+            ? NotFound()
+            : Ok(ordem.HistoricoStatus.OrderBy(periodo => periodo.Sequencia).Select(HistoricoStatusResponse.FromEntity));
+    }
+
     [Authorize]
     [HttpPost]
     public async Task<IActionResult> Post(CriarOrdemServicoRequest request)

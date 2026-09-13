@@ -5,6 +5,8 @@ namespace Oficina.API.Contracts;
 
 public record LoginRequest([Required] string Usuario, [Required] string Senha);
 
+public record AlterarStatusClienteRequest([Required] bool? Ativo);
+
 public record ClienteRequest(
     [Required, MaxLength(160)] string Nome,
     [Required, MaxLength(18)] string CpfCnpj,

@@ -10,7 +10,8 @@ public record ClienteResponse(
     string CpfCnpj,
     string Telefone,
     string Email,
-    IEnumerable<object> Veiculos)
+    IEnumerable<object> Veiculos,
+    bool Ativo)
 {
     public static ClienteResponse FromEntity(Cliente cliente) => new(
         cliente.Id,
@@ -26,7 +27,27 @@ public record ClienteResponse(
             veiculo.Modelo,
             veiculo.Ano,
             veiculo.ClienteId
-        }));
+        }),
+        cliente.Ativo);
+}
+
+public record HistoricoStatusResponse(
+    int Sequencia,
+    string Status,
+    DateTime? IniciadaEm,
+    DateTime? FinalizadaEm,
+    DateTime RegistradaEm,
+    double? DuracaoMinutos)
+{
+    public static HistoricoStatusResponse FromEntity(HistoricoStatusOrdemServico periodo) => new(
+        periodo.Sequencia,
+        periodo.Status.ToDisplayName(),
+        periodo.IniciadaEm,
+        periodo.FinalizadaEm,
+        periodo.RegistradaEm,
+        periodo.IniciadaEm.HasValue && periodo.FinalizadaEm.HasValue
+            ? (periodo.FinalizadaEm.Value - periodo.IniciadaEm.Value).TotalMinutes
+            : null);
 }
 
 public record OrdemServicoResumoResponse(Guid Id, string Numero, string Status, decimal ValorTotal, DateTime CriadaEm);

@@ -46,14 +46,32 @@ dotnet run --project Oficina.API/Oficina.API.csproj
 
 - `POST /api/auth/login`: gera JWT administrativo.
 - `GET|POST|PUT|DELETE /api/clientes`: CRUD de clientes.
+- `PATCH /api/clientes/{id}/status`: ativa/desativa cliente com JWT de administrador e corpo `{"ativo": false}`.
 - `GET|POST|PUT|DELETE /api/veiculos`: CRUD de veiculos.
 - `GET|POST|PUT|DELETE /api/servicos`: CRUD de servicos.
 - `GET|POST|PUT|DELETE /api/pecas-insumos`: CRUD e estoque.
 - `POST /api/ordens-servico`: cria OS, calcula orcamento e muda para `AguardandoAprovacao`.
 - `PATCH /api/ordens-servico/{id}/status`: avanca status administrativo.
+- `GET /api/ordens-servico/{id}/historico`: consulta periodos de status com JWT de administrador.
 - `POST /api/ordens-servico/{id}/aprovar?cpfCnpj=...`: aprovacao pelo cliente.
 - `GET /api/ordens-servico/consulta/{id}?cpfCnpj=...`: acompanhamento pelo cliente.
 - `GET /api/ordens-servico/metricas/tempo-medio`: tempo medio de execucao.
+
+## Fase 3 - Status do cliente e historico da OS
+
+Clientes novos e preexistentes ficam ativos por padrao. A desativacao preserva seus
+veiculos e ordens. O campo `ativo` prepara a consulta da futura Lambda; o bloqueio
+de autenticacao de clientes inativos sera implementado na integracao serverless.
+
+A abertura da OS continua retornando **Aguardando Aprovacao**. O historico persiste
+a passagem inicial de Recebida para Aguardando Aprovacao e as transicoes seguintes,
+sem inventar uma etapa de diagnostico. Periodos abertos ou sem inicio conhecido
+retornam `duracaoMinutos: null`.
+
+Veja [modelagem, migracao e roteiro de validacao](docs/modelagem-status-historico.md)
+e [ADR sobre o historico](docs/adrs/001-historico-status-os.md).
+Esta entrega prepara os dados para observabilidade; os dashboards e a integracao
+AWS ainda serao implementados.
 
 
 ## Fase 2 - Evolucao, Infraestrutura e Automacao
