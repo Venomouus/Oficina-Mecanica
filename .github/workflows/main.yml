@@ -2,14 +2,18 @@ name: Kubernetes Manifests
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "develop", "master" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "develop", "master" ]
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   validate-k8s:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Checkout repository
@@ -19,12 +23,6 @@ jobs:
         uses: yokawasa/action-setup-kube-tools@v0.11.2
         with:
           kubeconform: '0.6.7'
-
-      - name: Show repository files
-        run: |
-          pwd
-          ls -la
-          ls -la k8s
 
       - name: Validate Kubernetes manifests
         run: |

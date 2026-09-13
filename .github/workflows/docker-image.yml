@@ -2,7 +2,9 @@ name: Docker Image
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "develop", "master" ]
+  pull_request:
+    branches: [ "develop", "master" ]
   workflow_dispatch:
 
 env:
@@ -12,6 +14,7 @@ env:
 jobs:
   docker:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     permissions:
       contents: read
@@ -26,9 +29,14 @@ jobs:
         run: |
           OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           echo "tag=${{ env.REGISTRY }}/${OWNER}/${{ env.IMAGE_NAME }}:${{ github.sha }}" >> "$GITHUB_OUTPUT"
-          echo "latest=${{ env.REGISTRY }}/${OWNER}/${{ env.IMAGE_NAME }}:latest" >> "$GITHUB_OUTPUT"
+          CHANNEL=develop
+          if [ "$GITHUB_REF" = "refs/heads/master" ]; then
+            CHANNEL=latest
+          fi
+          echo "channel=${{ env.REGISTRY }}/${OWNER}/${{ env.IMAGE_NAME }}:${CHANNEL}" >> "$GITHUB_OUTPUT"
 
       - name: Login to GitHub Container Registry
+        if: github.event_name == 'push' && vars.DEPLOY_ENABLED == 'true'
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
@@ -39,10 +47,11 @@ jobs:
         run: |
           docker build \
             -t ${{ steps.image.outputs.tag }} \
-            -t ${{ steps.image.outputs.latest }} \
+            -t ${{ steps.image.outputs.channel }} \
             .
 
       - name: Push image
+        if: github.event_name == 'push' && vars.DEPLOY_ENABLED == 'true'
         run: |
           docker push ${{ steps.image.outputs.tag }}
-          docker push ${{ steps.image.outputs.latest }}
+          docker push ${{ steps.image.outputs.channel }}
