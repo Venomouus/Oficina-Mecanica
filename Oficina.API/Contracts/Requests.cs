@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using Oficina.Domain.Enums;
+using System.Text.Json.Serialization;
 
 namespace Oficina.API.Contracts;
 
@@ -58,6 +59,13 @@ public record CriarOrdemServicoRequest(
     [MaxLength(1000)] string? Observacoes);
 
 public record PecaOrdemRequest([Required] Guid PecaInsumoId, [Range(1, 100000)] int Quantidade);
+
+[JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
+public record CriarMinhaOrdemServicoRequest(
+    [Required] VeiculoOrdemServicoRequest Veiculo,
+    [Required] List<Guid> ServicosIds,
+    [Required] List<PecaOrdemRequest> Pecas,
+    [MaxLength(1000)] string? Observacoes);
 
 public record AlterarStatusRequest([Required] StatusOrdemServico Status);
 

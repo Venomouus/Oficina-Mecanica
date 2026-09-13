@@ -6,7 +6,7 @@ using Oficina.Application.Interfaces;
 using Oficina.Application.Services;
 using Oficina.Infrastructure.Persistence;
 using Oficina.Infrastructure.Repositories;
-using System.Text;
+using Oficina.API.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,25 +25,7 @@ builder.Services.AddScoped<IPecaInsumoRepository, PecaInsumoRepository>();
 builder.Services.AddScoped<IOrdemServicoRepository, OrdemServicoRepository>();
 
 
-var jwtSection = builder.Configuration.GetSection("Jwt");
-var jwtKey = jwtSection["Key"] ?? throw new InvalidOperationException("Jwt:Key nao configurada.");
-
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtSection["Issuer"],
-            ValidAudience = jwtSection["Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
-        };
-    });
-
-builder.Services.AddAuthorization();
+builder.Services.AddAutenticacaoOficina(builder.Configuration, builder.Environment);
 
 builder.Services.AddSwaggerGen(options =>
 {
@@ -60,7 +42,7 @@ builder.Services.AddSwaggerGen(options =>
         Scheme = "bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "Informe o token JWT obtido em /api/auth/login."
+        Description = "JWT administrativo de /api/auth/login ou JWT de cliente de POST /auth/cpf no serverless."
     });
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
     {

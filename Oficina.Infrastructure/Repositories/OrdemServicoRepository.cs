@@ -63,6 +63,15 @@ namespace Oficina.Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        public async Task<List<OrdemServicoResumo>> ListarPorClienteAsync(Guid clienteId)
+        {
+            return await _context.OrdensServico.AsNoTracking()
+                .Where(ordem => ordem.ClienteId == clienteId)
+                .OrderByDescending(ordem => ordem.CriadaEm)
+                .Select(ordem => new OrdemServicoResumo(ordem.Id, ordem.Numero, ordem.Status, ordem.ValorTotal, ordem.CriadaEm))
+                .ToListAsync();
+        }
+
         public async Task<OrdemServico?> ObterDetalhadaAsync(Guid id)
         {
             return await _context.OrdensServico

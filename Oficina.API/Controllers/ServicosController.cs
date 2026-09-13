@@ -1,12 +1,13 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Oficina.API.Contracts;
+using Oficina.API.Security;
 using Oficina.Application.Services;
 
 namespace Oficina.API.Controllers;
 
 [ApiController]
-[Authorize]
+[Authorize(Policy = AutenticacaoExtensions.Administrador)]
 [Route("api/[controller]")]
 public class ServicosController : ControllerBase
 {
