@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Oficina.API.Contracts;
+using Oficina.API.Security;
 using Oficina.Application.Common;
 using Oficina.Application.Models;
 using Oficina.Application.Services;
@@ -20,7 +21,7 @@ public class OrdensServicoController : ControllerBase
         _configuration = configuration;
     }
 
-    [Authorize]
+    [Authorize(Policy = AutenticacaoExtensions.Administrador)]
     [HttpGet]
     public async Task<IActionResult> Get()
     {
@@ -33,15 +34,15 @@ public class OrdensServicoController : ControllerBase
             ordem.CriadaEm)));
     }
 
-    [Authorize]
+    [Authorize(Policy = AutenticacaoExtensions.ConsultarOrdem)]
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> Get(Guid id)
     {
-        var ordem = await _service.ObterDetalhadaAsync(id);
-        return ordem is null ? NotFound() : Ok(OrdemServicoDetalheResponse.FromEntity(ordem));
+        var resultado = await ConsultarComAcessoAsync(id);
+        return resultado.Sucesso ? Ok(OrdemServicoDetalheResponse.FromEntity(resultado.Valor!)) : Responder(resultado);
     }
 
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = AutenticacaoExtensions.Administrador)]
     [HttpGet("{id:guid}/historico")]
     public async Task<IActionResult> Historico(Guid id)
     {
@@ -51,7 +52,7 @@ public class OrdensServicoController : ControllerBase
             : Ok(ordem.HistoricoStatus.OrderBy(periodo => periodo.Sequencia).Select(HistoricoStatusResponse.FromEntity));
     }
 
-    [Authorize]
+    [Authorize(Policy = AutenticacaoExtensions.Administrador)]
     [HttpPost]
     public async Task<IActionResult> Post(CriarOrdemServicoRequest request)
     {
@@ -85,7 +86,7 @@ public class OrdensServicoController : ControllerBase
             OrdemServicoDetalheResponse.FromEntity(resultado.Valor));
     }
 
-    [Authorize]
+    [Authorize(Policy = AutenticacaoExtensions.Administrador)]
     [HttpPatch("{id:guid}/status")]
     public async Task<IActionResult> AlterarStatus(Guid id, AlterarStatusRequest request)
     {
@@ -95,21 +96,21 @@ public class OrdensServicoController : ControllerBase
             : Responder(resultado);
     }
 
-    [AllowAnonymous]
+    [Authorize(Policy = AutenticacaoExtensions.ConsultarOrdem)]
     [HttpGet("{id:guid}/status")]
-    public async Task<IActionResult> ConsultarStatus(Guid id, [FromQuery] string cpfCnpj)
+    public async Task<IActionResult> ConsultarStatus(Guid id)
     {
-        var resultado = await _service.ConsultarClienteAsync(id, cpfCnpj);
+        var resultado = await ConsultarComAcessoAsync(id);
         return resultado.Sucesso
             ? Ok(OrdemServicoDetalheResponse.StatusFromEntity(resultado.Valor!))
             : Responder(resultado);
     }
 
-    [AllowAnonymous]
+    [Authorize(Policy = AutenticacaoExtensions.ClienteAutorizado)]
     [HttpPost("{id:guid}/aprovar")]
-    public async Task<IActionResult> Aprovar(Guid id, [FromQuery] string cpfCnpj)
+    public async Task<IActionResult> Aprovar(Guid id)
     {
-        var resultado = await _service.AprovarAsync(id, cpfCnpj);
+        var resultado = await _service.AprovarAsync(id, User.ClienteId());
         return resultado.Sucesso
             ? Ok(OrdemServicoDetalheResponse.FromEntity(resultado.Valor!))
             : Responder(resultado);
@@ -135,17 +136,17 @@ public class OrdensServicoController : ControllerBase
             : Responder(resultado);
     }
 
-    [AllowAnonymous]
+    [Authorize(Policy = AutenticacaoExtensions.ConsultarOrdem)]
     [HttpGet("consulta/{id:guid}")]
-    public async Task<IActionResult> ConsultarCliente(Guid id, [FromQuery] string cpfCnpj)
+    public async Task<IActionResult> ConsultarCliente(Guid id)
     {
-        var resultado = await _service.ConsultarClienteAsync(id, cpfCnpj);
+        var resultado = await ConsultarComAcessoAsync(id);
         return resultado.Sucesso
             ? Ok(OrdemServicoDetalheResponse.FromEntity(resultado.Valor!))
             : Responder(resultado);
     }
 
-    [Authorize]
+    [Authorize(Policy = AutenticacaoExtensions.Administrador)]
     [HttpGet("metricas/tempo-medio")]
     public async Task<IActionResult> TempoMedioExecucao()
     {
@@ -156,6 +157,14 @@ public class OrdensServicoController : ControllerBase
             quantidadeOrdensFinalizadas = metricas.QuantidadeOrdensFinalizadas,
             tempoMedioExecucaoMinutos = metricas.TempoMedioExecucaoMinutos
         });
+    }
+
+    private async Task<ResultadoOperacao<Oficina.Domain.Entities.OrdemServico>> ConsultarComAcessoAsync(Guid id)
+    {
+        if (!User.EhAdministrador()) return await _service.ConsultarClienteAsync(id, User.ClienteId());
+        var ordem = await _service.ObterDetalhadaAsync(id);
+        return ordem is null ? ResultadoOperacao<Oficina.Domain.Entities.OrdemServico>.NaoEncontrado()
+            : ResultadoOperacao<Oficina.Domain.Entities.OrdemServico>.Ok(ordem);
     }
 
     private IActionResult Responder(ResultadoOperacao resultado)

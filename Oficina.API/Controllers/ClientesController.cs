@@ -1,12 +1,13 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Oficina.API.Contracts;
+using Oficina.API.Security;
 using Oficina.Application.Services;
 
 namespace Oficina.API.Controllers;
 
 [ApiController]
-[Authorize]
+[Authorize(Policy = AutenticacaoExtensions.Administrador)]
 [Route("api/[controller]")]
 public class ClientesController : ControllerBase
 {
@@ -66,7 +67,7 @@ public class ClientesController : ControllerBase
         return NoContent();
     }
 
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = AutenticacaoExtensions.Administrador)]
     [HttpPatch("{id:guid}/status")]
     public async Task<IActionResult> AlterarStatus(Guid id, AlterarStatusClienteRequest request)
     {

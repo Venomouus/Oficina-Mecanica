@@ -1,0 +1,7 @@
+{
+  "ClienteJwt": {
+    "Enabled": true,
+    "Issuer": "http://127.0.0.1:5081",
+    "Audience": "oficina-api"
+  }
+}

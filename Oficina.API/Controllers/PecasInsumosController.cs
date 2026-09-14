@@ -1,13 +1,14 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Oficina.API.Contracts;
+using Oficina.API.Security;
 using Oficina.Application.Common;
 using Oficina.Application.Services;
 
 namespace Oficina.API.Controllers;
 
 [ApiController]
-[Authorize]
+[Authorize(Policy = AutenticacaoExtensions.Administrador)]
 [Route("api/pecas-insumos")]
 public class PecasInsumosController : ControllerBase
 {

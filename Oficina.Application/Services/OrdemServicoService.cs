@@ -39,6 +39,19 @@ namespace Oficina.Application.Services
             return await _ordens.ObterDetalhadaAsync(id);
         }
 
+        public Task<List<OrdemServicoResumo>> ListarPorClienteAsync(Guid clienteId) => _ordens.ListarPorClienteAsync(clienteId);
+
+        public async Task<ResultadoOperacao<OrdemServico>> CriarParaClienteAsync(Guid clienteId,
+            VeiculoOrdemInput veiculo, List<Guid> servicosIds, List<PecaOrdemInput> pecas, string? observacoes)
+        {
+            var cliente = await _clientes.ObterPorIdAsync(clienteId);
+            if (cliente is null || !cliente.Ativo)
+                return ResultadoOperacao<OrdemServico>.NaoAutorizado("Cliente nao autorizado.");
+            if (servicosIds.Count == 0)
+                return ResultadoOperacao<OrdemServico>.DadosInvalidos("Informe pelo menos um servico.");
+            return await CriarComClienteAsync(cliente, veiculo, servicosIds, pecas, observacoes);
+        }
+
         public async Task<ResultadoOperacao<OrdemServico>> CriarAsync(
             ClienteOrdemInput clienteInput,
             VeiculoOrdemInput veiculoInput,
@@ -58,6 +71,12 @@ namespace Oficina.Application.Services
 
             var cliente = clienteResult.Valor!;
 
+            return await CriarComClienteAsync(cliente, veiculoInput, servicosIds, pecasInput, observacoes);
+        }
+
+        private async Task<ResultadoOperacao<OrdemServico>> CriarComClienteAsync(Cliente cliente,
+            VeiculoOrdemInput veiculoInput, List<Guid> servicosIds, List<PecaOrdemInput> pecasInput, string? observacoes)
+        {
             var veiculo = await ObterOuCriarVeiculoAsync(veiculoInput, cliente.Id);
             if (veiculo is null)
                 return ResultadoOperacao<OrdemServico>.DadosInvalidos("Dados do veiculo invalidos ou vinculados a outro cliente.");
@@ -147,14 +166,14 @@ namespace Oficina.Application.Services
             }
         }
 
-        public async Task<ResultadoOperacao<OrdemServico>> AprovarAsync(Guid id, string cpfCnpj)
+        public async Task<ResultadoOperacao<OrdemServico>> AprovarAsync(Guid id, Guid clienteId)
         {
             var ordem = await _ordens.ObterDetalhadaAsync(id);
-            if (ordem is null)
+            if (ordem is null || ordem.ClienteId != clienteId)
                 return ResultadoOperacao<OrdemServico>.NaoEncontrado();
 
-            if (!DocumentoValidator.IsValid(cpfCnpj) || ordem.Cliente?.CpfCnpj != DocumentoValidator.Normalize(cpfCnpj))
-                return ResultadoOperacao<OrdemServico>.NaoAutorizado("Documento nao confere com a ordem de servico.");
+            if (ordem.Cliente?.Ativo != true)
+                return ResultadoOperacao<OrdemServico>.NaoAutorizado("Cliente nao autorizado.");
 
             try
             {
@@ -215,14 +234,14 @@ namespace Oficina.Application.Services
             }
         }
 
-        public async Task<ResultadoOperacao<OrdemServico>> ConsultarClienteAsync(Guid id, string cpfCnpj)
+        public async Task<ResultadoOperacao<OrdemServico>> ConsultarClienteAsync(Guid id, Guid clienteId)
         {
             var ordem = await _ordens.ObterDetalhadaAsync(id);
-            if (ordem is null)
+            if (ordem is null || ordem.ClienteId != clienteId)
                 return ResultadoOperacao<OrdemServico>.NaoEncontrado();
 
-            if (!DocumentoValidator.IsValid(cpfCnpj) || ordem.Cliente?.CpfCnpj != DocumentoValidator.Normalize(cpfCnpj))
-                return ResultadoOperacao<OrdemServico>.NaoAutorizado("Documento nao confere com a ordem de servico.");
+            if (ordem.Cliente?.Ativo != true)
+                return ResultadoOperacao<OrdemServico>.NaoAutorizado("Cliente nao autorizado.");
 
             return ResultadoOperacao<OrdemServico>.Ok(ordem);
         }
