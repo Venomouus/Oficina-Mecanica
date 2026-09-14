@@ -5,6 +5,7 @@ MVP de back-end monolitico em ASP.NET Core 8 para gestao de clientes, veiculos, 
 ## Arquitetura
 
 - `Oficina.Domain`: entidades, regras de status da OS, estoque e validadores de CPF/CNPJ e placa.
+- `Oficina.Application`: casos de uso e servicos de aplicacao.
 - `Oficina.Infrastructure`: persistencia com EF Core e PostgreSQL.
 - `Oficina.API`: controllers REST, autenticacao JWT e Swagger.
 - `Oficina.Tests`: testes unitarios dos dominios criticos.
@@ -31,7 +32,8 @@ Credenciais administrativas do MVP:
 }
 ```
 
-Obtenha o token em `POST /api/auth/login` e use o botao `Authorize` do Swagger com o valor `Bearer {token}`.
+Obtenha o token em `POST /api/auth/login` e cole somente o valor de `accessToken`
+no botao `Authorize` do Swagger. Nas chamadas HTTP, use `Authorization: Bearer {token}`.
 
 ## Executar localmente
 
@@ -53,15 +55,18 @@ dotnet run --project Oficina.API/Oficina.API.csproj
 - `POST /api/ordens-servico`: cria OS, calcula orcamento e muda para `AguardandoAprovacao`.
 - `PATCH /api/ordens-servico/{id}/status`: avanca status administrativo.
 - `GET /api/ordens-servico/{id}/historico`: consulta periodos de status com JWT de administrador.
-- `POST /api/ordens-servico/{id}/aprovar?cpfCnpj=...`: aprovacao pelo cliente.
-- `GET /api/ordens-servico/consulta/{id}?cpfCnpj=...`: acompanhamento pelo cliente.
+- `GET|POST /api/minhas-ordens-servico`: lista e abre OS para o cliente identificado pelo JWT do serverless.
+- `GET /api/minhas-ordens-servico/{id}`: consulta uma OS do cliente autenticado.
+- `POST /api/minhas-ordens-servico/{id}/aprovar`: aprova uma OS do cliente autenticado.
+- `POST /api/ordens-servico/{id}/aprovar`: rota equivalente de aprovacao com JWT de cliente.
+- `GET /api/ordens-servico/consulta/{id}`: acompanhamento com JWT de cliente (propria OS) ou administrador.
 - `GET /api/ordens-servico/metricas/tempo-medio`: tempo medio de execucao.
 
 ## Fase 3 - Status do cliente e historico da OS
 
 Clientes novos e preexistentes ficam ativos por padrao. A desativacao preserva seus
-veiculos e ordens. O campo `ativo` prepara a consulta da futura Lambda; o bloqueio
-de autenticacao de clientes inativos sera implementado na integracao serverless.
+veiculos e ordens. O serverless consulta `ativo` ao emitir o token; a API tambem
+verifica o status em cada requisicao com JWT de cliente, bloqueando clientes inativos.
 
 A abertura da OS continua retornando **Aguardando Aprovacao**. O historico persiste
 a passagem inicial de Recebida para Aguardando Aprovacao e as transicoes seguintes,
@@ -72,6 +77,27 @@ Veja [modelagem, migracao e roteiro de validacao](docs/modelagem-status-historic
 e [ADR sobre o historico](docs/adrs/001-historico-status-os.md).
 Esta entrega prepara os dados para observabilidade; os dashboards e a integracao
 AWS ainda serao implementados.
+
+## Fase 3 - Autorizacao de clientes com JWT
+
+A API valida o JWT RS256 emitido por `Oficina-serverless` usando discovery/JWKS.
+O cliente pode listar, abrir, consultar e aprovar somente suas OS. Cadastros,
+estoque, fila operacional, historico e alteracao de status exigem administrador.
+A abertura continua em **Aguardando Aprovacao**.
+
+**Mudanca de contrato:** informar CPF na URL deixou de autorizar consultas e
+aprovacoes. Essas chamadas agora exigem `Authorization: Bearer <JWT>`; o cliente
+e identificado pelo `sub` assinado. A criacao pelo cliente utiliza a nova rota
+`POST /api/minhas-ordens-servico`, sem CPF ou identificador de cliente no corpo.
+
+A validacao de clientes fica desabilitada por padrao ate configurar o emissor;
+isso nao libera rotas anonimas. O login administrativo permanece disponivel.
+
+Veja [configuracao e teste local completo](docs/autenticacao-cliente-jwt.md),
+[exemplo sem segredos](config/cliente-jwt.example.json) e
+[ADR de autorizacao](docs/adrs/002-autorizacao-cliente-jwt.md).
+Esta etapa implementa a integracao local; API Gateway, deploy AWS e CD continuam
+pendentes. Mantenha `DEPLOY_ENABLED=false` durante o desenvolvimento local.
 
 
 ## Fase 2 - Evolucao, Infraestrutura e Automacao

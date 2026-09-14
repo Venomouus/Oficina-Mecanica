@@ -7,6 +7,7 @@ namespace Oficina.Application.Interfaces
     {
         Task<List<OrdemServicoResumo>> ListarResumoAsync();
         Task<List<OrdemServicoResumo>> ListarFilaOperacionalAsync();
+        Task<List<OrdemServicoResumo>> ListarPorClienteAsync(Guid clienteId);
         Task<OrdemServico?> ObterDetalhadaAsync(Guid id);
         Task AdicionarAsync(OrdemServico ordem);
         Task<TempoMedioExecucao> CalcularTempoMedioExecucaoAsync();
