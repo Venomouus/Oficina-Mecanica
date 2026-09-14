@@ -1,0 +1,40 @@
+{
+  "api": {
+    "contract_version": 1,
+    "environment": "staging",
+    "aws_region": "us-east-1",
+    "aws_account_id": "123456789012",
+    "cluster_name": "oficina-lab",
+    "namespace": "oficina-staging",
+    "image_repository": "123456789012.dkr.ecr.us-east-1.amazonaws.com/oficina/staging/api",
+    "database_host": "oficina-lab.example.us-east-1.rds.amazonaws.com",
+    "database_name": "oficina_staging",
+    "role_arns": {
+      "app": "arn:aws:iam::123456789012:role/oficina-staging-oficina-api",
+      "migrations": "arn:aws:iam::123456789012:role/oficina-staging-oficina-migrations"
+    },
+    "secret_arns": {
+      "app": "arn:aws:secretsmanager:us-east-1:123456789012:secret:oficina/staging/database/app-Ab1234",
+      "migrations": "arn:aws:secretsmanager:us-east-1:123456789012:secret:oficina/staging/database/migrations-Ab1234",
+      "api": "arn:aws:secretsmanager:us-east-1:123456789012:secret:oficina/staging/api/config-Ab1234"
+    }
+  },
+  "gateway": {
+    "contract_version": 1,
+    "environment": "staging",
+    "aws_region": "us-east-1",
+    "issuer": "https://example.execute-api.us-east-1.amazonaws.com",
+    "audience": "oficina-api"
+  },
+  "backend": {
+    "contract_version": 1,
+    "environment": "staging",
+    "aws_region": "us-east-1",
+    "cluster_name": "oficina-lab",
+    "namespace": "oficina-staging"
+  },
+  "image_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "release": "example-001",
+  "alb_subnet_cidrs": ["10.20.32.0/20", "10.20.48.0/20"],
+  "database_subnet_cidrs": ["10.20.64.0/20", "10.20.80.0/20"]
+}

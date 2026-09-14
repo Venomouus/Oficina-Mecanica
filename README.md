@@ -1,5 +1,12 @@
 # Oficina Mecanica API
 
+## Preparacao para EKS
+
+Deploy da API e Job de migrations separados, segredos via IRSA/Secrets Manager,
+imagem sem root e health checks distintos. Veja o [roteiro de deploy EKS](docs/deploy-eks.md).
+Codigo validado localmente; provisionamento AWS e deploy continuam pendentes.
+Manter `DEPLOY_ENABLED=false`. O laboratorio Kind existente permanece em `k8s/` e `infra/`.
+
 MVP de back-end monolitico em ASP.NET Core 8 para gestao de clientes, veiculos, servicos, pecas/insumos e ordens de servico de uma oficina mecanica.
 
 ## Arquitetura
