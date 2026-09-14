@@ -7,12 +7,33 @@ using Oficina.Application.Services;
 using Oficina.Infrastructure.Persistence;
 using Oficina.Infrastructure.Repositories;
 using Oficina.API.Security;
+using Oficina.API.Hosting;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 
-var builder = WebApplication.CreateBuilder(args);
+var migrate = args.Contains("--migrate");
+var builder = WebApplication.CreateBuilder(args.Where(arg => arg != "--migrate").ToArray());
+try
+{
+    if (builder.Configuration.GetValue<bool>("AwsRuntime:Enabled"))
+        await AwsRuntimeConfiguration.LoadAsync(builder.Configuration, migrate);
+    RuntimeConfiguration.Validate(builder.Configuration, builder.Environment, migrate);
+}
+catch
+{
+    Console.Error.WriteLine("Configuracao de inicializacao invalida ou segredo indisponivel. Verifique os contratos, IRSA e Secrets Manager.");
+    Environment.ExitCode = 1;
+    return;
+}
+
+if (migrate)
+{
+    Environment.ExitCode = await MigrationRunner.RunAsync(builder.Configuration.GetConnectionString("DefaultConnection")!);
+    return;
+}
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddHealthChecks();
+builder.Services.AddHealthChecks().AddCheck<DatabaseReadinessCheck>("database", tags: new[] { "ready" }, timeout: TimeSpan.FromSeconds(3));
 builder.Services.AddScoped<ClienteService>();
 builder.Services.AddScoped<VeiculoService>();
 builder.Services.AddScoped<ServicoService>();
@@ -67,7 +88,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-if (!app.Environment.IsEnvironment("Testing"))
+if (app.Environment.IsDevelopment() && builder.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
 {
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<OficinaDbContext>();
@@ -75,7 +96,8 @@ if (!app.Environment.IsEnvironment("Testing"))
 }
 
 
-app.MapHealthChecks("/health");
+app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
+app.MapHealthChecks("/health", new HealthCheckOptions { Predicate = check => check.Tags.Contains("ready") });
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
