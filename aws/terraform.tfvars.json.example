@@ -1,0 +1,39 @@
+{
+  "environment": "staging",
+  "aws_account_id": "123456789012",
+  "aws_region": "us-east-1",
+  "platform": {
+    "contract_version": 1,
+    "aws_region": "us-east-1",
+    "vpc_id": "vpc-0123456789abcdef0",
+    "cluster_name": "oficina-lab",
+    "oidc_provider_arn": "arn:aws:iam::123456789012:oidc-provider/oidc.eks.us-east-1.amazonaws.com/id/EXAMPLE",
+    "oidc_issuer_url": "https://oidc.eks.us-east-1.amazonaws.com/id/EXAMPLE",
+    "environments": {
+      "staging": { "namespace": "oficina-staging", "branch": "develop" },
+      "producao": { "namespace": "oficina-producao", "branch": "master" }
+    }
+  },
+  "database": {
+    "contract_version": 1,
+    "aws_region": "us-east-1",
+    "vpc_id": "vpc-0123456789abcdef0",
+    "address": "oficina-lab.example.us-east-1.rds.amazonaws.com",
+    "port": 5432,
+    "ssl_mode": "VerifyFull",
+    "planned_environments": {
+      "staging": { "database_name": "oficina_staging", "app_role": "oficina_staging_app", "migrations_role": "oficina_staging_migrations" },
+      "producao": { "database_name": "oficina_producao", "app_role": "oficina_producao_app", "migrations_role": "oficina_producao_migrations" }
+    }
+  },
+  "runtime_secret_arns": {
+    "staging": {
+      "app": "arn:aws:secretsmanager:us-east-1:123456789012:secret:oficina/staging/database/app-Ab1234",
+      "migrations": "arn:aws:secretsmanager:us-east-1:123456789012:secret:oficina/staging/database/migrations-Ab1234"
+    },
+    "producao": {
+      "app": "arn:aws:secretsmanager:us-east-1:123456789012:secret:oficina/producao/database/app-Ab1234",
+      "migrations": "arn:aws:secretsmanager:us-east-1:123456789012:secret:oficina/producao/database/migrations-Ab1234"
+    }
+  }
+}

@@ -36,3 +36,12 @@ Desktop.ini
 **/.terraform/
 *.tfstate
 *.tfstate.*
+
+# AWS/local configuration and generated deployment artifacts
+**/*.local.*
+**/*.tfvars
+**/*.tfvars.json
+deploy/generated/
+.env*
+__pycache__/
+.database-contract/

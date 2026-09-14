@@ -1,0 +1,51 @@
+name: CI - EKS Preparation
+
+on:
+  pull_request:
+    branches: [develop, master]
+  push:
+    branches: [develop, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-eks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.15.8'
+          terraform_wrapper: false
+      - name: Terraform format, validation and mocked tests (no AWS credentials)
+        run: |
+          terraform -chdir=aws fmt -check -recursive
+          terraform -chdir=aws init -backend=false -input=false -lockfile=readonly
+          terraform -chdir=aws validate
+          terraform -chdir=aws test
+      - name: Test and render public manifests
+        run: |
+          python -m unittest discover -s deploy/tests -v
+          python deploy/render.py --config deploy/config.example.json
+      - uses: yokawasa/action-setup-kube-tools@v0.11.2
+        with:
+          kubeconform: '0.6.7'
+      - name: Validate rendered Kubernetes schemas
+        run: kubeconform -strict -summary -kubernetes-version 1.35.0 deploy/generated/
+      - name: Checkout reviewed database bootstrap
+        uses: actions/checkout@v4
+        with:
+          repository: Venomouus/Oficina-infra-database
+          ref: 27c1bdf3852c40361b3971a92746079b42478820
+          path: .database-contract
+          persist-credentials: false
+      - name: Build non-root image
+        run: docker build -t oficina-api:eks-test .
+      - name: Test real bootstrap, migrations and restricted API on disposable PostgreSQL
+        run: python deploy/smoke.py --bootstrap-path .database-contract/bootstrap

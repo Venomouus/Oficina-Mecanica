@@ -1,6 +1,7 @@
 # Git and CI files
 .git/
 .github/
+.database-contract/
 
 # IDE files
 .vs/
@@ -22,6 +23,8 @@ coverage.cobertura.xml
 
 # Terraform/IaC files are not needed in the API image
 infra/
+aws/
+deploy/
 **/.terraform/
 *.tfstate
 *.tfstate.*
@@ -37,6 +40,12 @@ RELATORIO_VULNERABILIDADES*
 
 # Local/env/log files
 *.env
+.env*
+**/*.local.*
+**/*.tfvars
+**/*.tfvars.json
+**/*.pem
+!Oficina.API/certificates/rds-global-bundle.pem
 *.log
 Thumbs.db
 Desktop.ini
