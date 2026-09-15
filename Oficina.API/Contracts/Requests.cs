@@ -56,7 +56,8 @@ public record CriarOrdemServicoRequest(
     [Required] VeiculoOrdemServicoRequest Veiculo,
     [Required] List<Guid> ServicosIds,
     [Required] List<PecaOrdemRequest> Pecas,
-    [MaxLength(1000)] string? Observacoes);
+    [MaxLength(1000)] string? Observacoes,
+    bool IniciarEmDiagnostico = false);
 
 public record PecaOrdemRequest([Required] Guid PecaInsumoId, [Range(1, 100000)] int Quantidade);
 

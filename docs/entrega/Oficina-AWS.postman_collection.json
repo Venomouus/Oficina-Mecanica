@@ -1,0 +1,16 @@
+{
+  "info": {"name": "Oficina - AWS Academy", "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"},
+  "variable": [
+    {"key": "baseUrl", "value": "https://tyza3bgnt9.execute-api.us-east-1.amazonaws.com"},
+    {"key": "cpf", "value": "12345678909"},
+    {"key": "jwt", "value": ""},
+    {"key": "ordemId", "value": ""}
+  ],
+  "item": [
+    {"name": "1 - Autenticar CPF", "request": {"method": "POST", "header": [{"key": "Content-Type", "value": "application/json"}], "url": "{{baseUrl}}/auth/cpf", "body": {"mode": "raw", "raw": "{\"cpf\":\"{{cpf}}\"}"}}, "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["if (pm.response.code === 200) pm.collectionVariables.set('jwt', pm.response.json().accessToken);"]}}]},
+    {"name": "2 - Minhas ordens", "request": {"method": "GET", "url": "{{baseUrl}}/api/minhas-ordens-servico", "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{jwt}}", "type": "string"}]}}},
+    {"name": "3 - Consultar ordem", "request": {"method": "GET", "url": "{{baseUrl}}/api/minhas-ordens-servico/{{ordemId}}", "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{jwt}}", "type": "string"}]}}},
+    {"name": "4 - Aprovar ordem", "request": {"method": "POST", "url": "{{baseUrl}}/api/minhas-ordens-servico/{{ordemId}}/aprovar", "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{jwt}}", "type": "string"}]}}},
+    {"name": "5 - JWKS publico", "request": {"method": "GET", "url": "{{baseUrl}}/.well-known/jwks.json"}}
+  ]
+}

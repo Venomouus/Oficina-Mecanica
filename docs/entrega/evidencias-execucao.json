@@ -1,0 +1,19 @@
+{
+  "executadoEmUtc": "2026-09-14T20:12:08.179218+00:00",
+  "ambiente": "Docker local, sem AWS",
+  "verificacoes": [
+    "Autenticacao CPF de dois clientes e emissao de JWT",
+    "OS aguardando aprovacao; isolamento 404; perfil 403; sem token 401; campo administrativo rejeitado",
+    "Aprovacao, execucao, finalizacao e entrega da OS do cliente",
+    "Diagnostico administrativo e periodos reais por status, sem alterar datas",
+    "Metricas persistidas: volume diario e tempos de Diagnostico, Execucao e Finalizacao",
+    "Traces no Tempo e logs JSON correlacionados no Loki"
+  ],
+  "falhaControlada": false,
+  "limites": [
+    "Nao comprova deploy cloud",
+    "CPU/memoria sao do processo da API, nao do Kubernetes",
+    "Nao comprova notificacao serverless nem envio externo de alertas"
+  ],
+  "interfaceGrafana": "Dashboard com 13 paineis e 2 regras de alerta carregados; disparo/recuperacao nao ensaiados nesta rodada."
+}

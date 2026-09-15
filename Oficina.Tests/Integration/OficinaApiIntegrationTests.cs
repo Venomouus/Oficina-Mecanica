@@ -150,6 +150,26 @@ public class OficinaApiIntegrationTests : IClassFixture<OficinaApiFactory>
         Assert.Equal(3, pecaBody.RootElement.GetProperty("quantidadeEstoque").GetInt32());
     }
 
+    [Fact]
+    public async Task Administrador_PodeAbrirDiagnosticoAntesDeEnviarParaAprovacao()
+    {
+        await AutenticarAsync();
+        var servicoId = await CriarServicoAsync();
+        var response = await _client.PostAsJsonAsync("/api/ordens-servico", new
+        {
+            cliente = new { nome = "Cliente Integracao", cpfCnpj = "123.456.789-09" },
+            veiculo = new { placa = "DIA1234", marca = "Fiat", modelo = "Uno", ano = 2020 },
+            servicosIds = new[] { servicoId }, pecas = Array.Empty<object>(), iniciarEmDiagnostico = true
+        });
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        var id = body.GetProperty("id").GetGuid();
+        var next = await _client.PatchAsJsonAsync($"/api/ordens-servico/{id}/status", new { status = 3 });
+        Assert.Equal(HttpStatusCode.OK, next.StatusCode);
+        var history = await _client.GetStringAsync($"/api/ordens-servico/{id}/historico");
+        Assert.Contains("Diagnostico", history);
+    }
+
     private async Task AutenticarAsync()
     {
         var token = await LoginAsync();

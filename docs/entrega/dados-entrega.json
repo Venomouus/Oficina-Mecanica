@@ -1,0 +1,23 @@
+{
+  "titulo": "Tech Challenge - Oficina Mecanica",
+  "video": "PENDENTE: inserir link publico ou nao listado do YouTube/Vimeo (ate 15 minutos)",
+  "acesso_avaliador": "Confirmado via API GitHub em 14/09/2026: soat-architecture tem acesso aos quatro repositorios. Branch master protegida nos quatro.",
+  "deploys": [
+    "https://tyza3bgnt9.execute-api.us-east-1.amazonaws.com",
+    "https://5fzdgx69ni.execute-api.us-east-1.amazonaws.com"
+  ],
+  "repositorios": [
+    "https://github.com/Venomouus/Oficina-Mecanica",
+    "https://github.com/Venomouus/Oficina-serverless",
+    "https://github.com/Venomouus/Oficina-infra-kubernetes",
+    "https://github.com/Venomouus/Oficina-infra-database"
+  ],
+  "documentacao": [
+    "https://github.com/Venomouus/Oficina-Mecanica/blob/master/docs/entrega/README.md",
+    "https://github.com/Venomouus/Oficina-Mecanica/blob/master/docs/entrega/arquitetura.md",
+    "https://github.com/Venomouus/Oficina-Mecanica/blob/master/local/README.md",
+    "https://github.com/Venomouus/Oficina-infra-database/tree/master/docs",
+    "https://github.com/Venomouus/Oficina-infra-kubernetes/tree/master/docs",
+    "https://github.com/Venomouus/Oficina-serverless/tree/master/docs"
+  ]
+}

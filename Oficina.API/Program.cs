@@ -9,9 +9,12 @@ using Oficina.Infrastructure.Repositories;
 using Oficina.API.Security;
 using Oficina.API.Hosting;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Oficina.API.Observability;
 
 var migrate = args.Contains("--migrate");
 var builder = WebApplication.CreateBuilder(args.Where(arg => arg != "--migrate").ToArray());
+builder.Logging.ClearProviders();
+builder.Logging.AddJsonConsole(options => options.IncludeScopes = true);
 try
 {
     if (builder.Configuration.GetValue<bool>("AwsRuntime:Enabled"))
@@ -32,6 +35,7 @@ if (migrate)
 }
 
 builder.Services.AddControllers();
+builder.Services.AddOficinaObservability(builder.Configuration);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddHealthChecks().AddCheck<DatabaseReadinessCheck>("database", tags: new[] { "ready" }, timeout: TimeSpan.FromSeconds(3));
 builder.Services.AddScoped<ClienteService>();
@@ -81,6 +85,8 @@ builder.Services.AddDbContext<OficinaDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 var app = builder.Build();
+app.UseRouting();
+app.UseMiddleware<RequestTelemetryMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {

@@ -1,5 +1,8 @@
 data "aws_eks_cluster" "selected" { name = var.platform.cluster_name }
-data "aws_iam_openid_connect_provider" "selected" { arn = var.platform.oidc_provider_arn }
+data "aws_iam_openid_connect_provider" "selected" {
+  count = var.academy_role_arn == null ? 1 : 0
+  arn   = var.platform.oidc_provider_arn
+}
 
 locals {
   namespace        = var.platform.environments[var.environment].namespace
@@ -18,8 +21,10 @@ resource "aws_ecr_repository" "api" {
       condition = (
         data.aws_eks_cluster.selected.vpc_config[0].vpc_id == var.platform.vpc_id &&
         data.aws_eks_cluster.selected.identity[0].oidc[0].issuer == var.platform.oidc_issuer_url &&
-        trimprefix(data.aws_iam_openid_connect_provider.selected.url, "https://") == local.oidc_host &&
-        contains(data.aws_iam_openid_connect_provider.selected.client_id_list, "sts.amazonaws.com")
+        (var.academy_role_arn != null ? true : (
+          trimprefix(data.aws_iam_openid_connect_provider.selected[0].url, "https://") == local.oidc_host &&
+          contains(data.aws_iam_openid_connect_provider.selected[0].client_id_list, "sts.amazonaws.com")
+        ))
       )
       error_message = "Cluster e provedor OIDC reais devem corresponder ao contrato platform."
     }
@@ -34,7 +39,7 @@ resource "aws_secretsmanager_secret" "api" {
 }
 
 resource "aws_iam_role" "workload" {
-  for_each = local.service_accounts
+  for_each = var.academy_role_arn != null ? {} : local.service_accounts
   name     = "${var.project_name}-${var.environment}-${each.value}"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -50,7 +55,7 @@ resource "aws_iam_role" "workload" {
   })
 }
 resource "aws_iam_role_policy" "secrets" {
-  for_each = local.service_accounts
+  for_each = var.academy_role_arn != null ? {} : local.service_accounts
   name     = "read-own-secrets"
   role     = aws_iam_role.workload[each.key].id
   policy = jsonencode({
@@ -75,7 +80,8 @@ output "api" {
     image_repository = aws_ecr_repository.api.repository_url
     database_host    = var.database.address
     database_name    = var.database.planned_environments[var.environment].database_name
-    role_arns        = { for purpose, role in aws_iam_role.workload : purpose => role.arn }
+    academy_mode     = var.academy_role_arn != null
+    role_arns        = var.academy_role_arn != null ? { for purpose in keys(local.service_accounts) : purpose => var.academy_role_arn } : { for purpose, role in aws_iam_role.workload : purpose => role.arn }
     secret_arns      = merge(var.runtime_secret_arns[var.environment], { api = aws_secretsmanager_secret.api.arn })
   }
 }
