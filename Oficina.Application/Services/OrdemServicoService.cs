@@ -57,7 +57,8 @@ namespace Oficina.Application.Services
             VeiculoOrdemInput veiculoInput,
             List<Guid> servicosIds,
             List<PecaOrdemInput> pecasInput,
-            string? observacoes)
+            string? observacoes,
+            bool iniciarEmDiagnostico = false)
         {
             if (!DocumentoValidator.IsValid(clienteInput.CpfCnpj))
                 return ResultadoOperacao<OrdemServico>.DadosInvalidos("CPF/CNPJ invalido.");
@@ -71,11 +72,12 @@ namespace Oficina.Application.Services
 
             var cliente = clienteResult.Valor!;
 
-            return await CriarComClienteAsync(cliente, veiculoInput, servicosIds, pecasInput, observacoes);
+            return await CriarComClienteAsync(cliente, veiculoInput, servicosIds, pecasInput, observacoes, iniciarEmDiagnostico);
         }
 
         private async Task<ResultadoOperacao<OrdemServico>> CriarComClienteAsync(Cliente cliente,
-            VeiculoOrdemInput veiculoInput, List<Guid> servicosIds, List<PecaOrdemInput> pecasInput, string? observacoes)
+            VeiculoOrdemInput veiculoInput, List<Guid> servicosIds, List<PecaOrdemInput> pecasInput, string? observacoes,
+            bool iniciarEmDiagnostico = false)
         {
             var veiculo = await ObterOuCriarVeiculoAsync(veiculoInput, cliente.Id);
             if (veiculo is null)
@@ -114,7 +116,8 @@ namespace Oficina.Application.Services
                     peca.PrecoUnitario));
             }
 
-            ordem.EnviarParaAprovacao();
+            if (iniciarEmDiagnostico) ordem.IniciarDiagnostico();
+            else ordem.EnviarParaAprovacao();
 
             await _ordens.AdicionarAsync(ordem);
             await _ordens.SalvarAlteracoesAsync();

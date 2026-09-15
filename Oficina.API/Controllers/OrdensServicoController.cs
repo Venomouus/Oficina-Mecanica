@@ -75,7 +75,8 @@ public class OrdensServicoController : ControllerBase
             veiculo,
             request.ServicosIds,
             pecas,
-            request.Observacoes);
+            request.Observacoes,
+            request.IniciarEmDiagnostico);
 
         if (!resultado.Sucesso)
             return Responder(resultado);

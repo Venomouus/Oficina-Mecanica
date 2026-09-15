@@ -37,7 +37,7 @@ variable "platform" {
   validation {
     condition = (
       var.platform.contract_version == 1 && var.platform.aws_region == var.aws_region &&
-      startswith(var.platform.oidc_provider_arn, "arn:aws:iam::${var.aws_account_id}:oidc-provider/") &&
+      (var.academy_role_arn != null ? true : startswith(var.platform.oidc_provider_arn, "arn:aws:iam::${var.aws_account_id}:oidc-provider/")) &&
       try(var.platform.environments[var.environment].namespace == "oficina-${var.environment}", false) &&
       try(var.platform.environments[var.environment].branch == (var.environment == "staging" ? "develop" : "master"), false)
     )

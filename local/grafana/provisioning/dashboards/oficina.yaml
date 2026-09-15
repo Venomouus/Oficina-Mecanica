@@ -1,0 +1,6 @@
+apiVersion: 1
+providers:
+  - name: Oficina
+    type: file
+    options:
+      path: /demo-dashboards

@@ -1,0 +1,213 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Count 3 /Kids [14 0 R 19 0 R 21 0 R] >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+4 0 obj
+<< /Type /Annot /Subtype /Link /Rect [48 560 548 574] /Border [0 0 0] /A << /S /URI /URI (https://github.com/Venomouus/Oficina-Mecanica) >> >>
+endobj
+5 0 obj
+<< /Type /Annot /Subtype /Link /Rect [48 528 548 542] /Border [0 0 0] /A << /S /URI /URI (https://github.com/Venomouus/Oficina-serverless) >> >>
+endobj
+6 0 obj
+<< /Type /Annot /Subtype /Link /Rect [48 496 548 510] /Border [0 0 0] /A << /S /URI /URI (https://github.com/Venomouus/Oficina-infra-kubernetes) >> >>
+endobj
+7 0 obj
+<< /Type /Annot /Subtype /Link /Rect [48 464 548 478] /Border [0 0 0] /A << /S /URI /URI (https://github.com/Venomouus/Oficina-infra-database) >> >>
+endobj
+8 0 obj
+<< /Type /Annot /Subtype /Link /Rect [48 199 548 213] /Border [0 0 0] /A << /S /URI /URI (https://github.com/Venomouus/Oficina-Mecanica/blob/master/docs/entrega/README.md) >> >>
+endobj
+9 0 obj
+<< /Type /Annot /Subtype /Link /Rect [48 167 548 181] /Border [0 0 0] /A << /S /URI /URI (https://github.com/Venomouus/Oficina-Mecanica/blob/master/docs/entrega/arquitetura.md) >> >>
+endobj
+10 0 obj
+<< /Type /Annot /Subtype /Link /Rect [48 135 548 149] /Border [0 0 0] /A << /S /URI /URI (https://github.com/Venomouus/Oficina-Mecanica/blob/master/local/README.md) >> >>
+endobj
+11 0 obj
+<< /Type /Annot /Subtype /Link /Rect [48 103 548 117] /Border [0 0 0] /A << /S /URI /URI (https://github.com/Venomouus/Oficina-infra-database/tree/master/docs) >> >>
+endobj
+12 0 obj
+<< /Type /Annot /Subtype /Link /Rect [48 71 548 85] /Border [0 0 0] /A << /S /URI /URI (https://github.com/Venomouus/Oficina-infra-kubernetes/tree/master/docs) >> >>
+endobj
+13 0 obj
+<< /Length 2851 >>
+stream
+BT /F1 18 Tf 48 790 Td (Tech Challenge - Oficina Mecanica) Tj ET
+BT /F1 11 Tf 48 767 Td () Tj ET
+BT /F1 14 Tf 48 751 Td (Entrega: AWS Academy e alternativa local) Tj ET
+BT /F1 11 Tf 48 732 Td () Tj ET
+BT /F1 11 Tf 48 716 Td (EKS, RDS, Lambda e API Gateway provisionados. O fluxo CPF/JWT/OS foi demonstrado em) Tj ET
+BT /F1 11 Tf 48 700 Td (homologacao, com metricas Kubernetes e traces. Consultar evidencias-aws.json e os) Tj ET
+BT /F1 11 Tf 48 684 Td (limites da entrega.) Tj ET
+BT /F1 11 Tf 48 668 Td () Tj ET
+BT /F1 14 Tf 48 652 Td (RASCUNHO - preencher video e confirmacao do avaliador antes de) Tj ET
+BT /F1 14 Tf 48 633 Td (enviar.) Tj ET
+BT /F1 11 Tf 48 614 Td () Tj ET
+BT /F1 14 Tf 48 598 Td (1. Repositorios) Tj ET
+BT /F1 11 Tf 48 579 Td () Tj ET
+BT /F1 11 Tf 48 563 Td (https://github.com/Venomouus/Oficina-Mecanica) Tj ET
+BT /F1 11 Tf 48 547 Td () Tj ET
+BT /F1 11 Tf 48 531 Td (https://github.com/Venomouus/Oficina-serverless) Tj ET
+BT /F1 11 Tf 48 515 Td () Tj ET
+BT /F1 11 Tf 48 499 Td (https://github.com/Venomouus/Oficina-infra-kubernetes) Tj ET
+BT /F1 11 Tf 48 483 Td () Tj ET
+BT /F1 11 Tf 48 467 Td (https://github.com/Venomouus/Oficina-infra-database) Tj ET
+BT /F1 11 Tf 48 451 Td () Tj ET
+BT /F1 14 Tf 48 435 Td (2. Video de demonstracao \(ate 15 minutos\)) Tj ET
+BT /F1 11 Tf 48 416 Td () Tj ET
+BT /F1 11 Tf 48 400 Td (PENDENTE: inserir link publico ou nao listado do YouTube/Vimeo \(ate 15 minutos\)) Tj ET
+BT /F1 11 Tf 48 384 Td () Tj ET
+BT /F1 14 Tf 48 368 Td (3. Acesso do avaliador soat-architecture) Tj ET
+BT /F1 11 Tf 48 349 Td () Tj ET
+BT /F1 11 Tf 48 333 Td (Confirmado via API GitHub em 14/09/2026: soat-architecture tem acesso aos quatro) Tj ET
+BT /F1 11 Tf 48 317 Td (repositorios. Branch master protegida nos quatro.) Tj ET
+BT /F1 11 Tf 48 301 Td () Tj ET
+BT /F1 14 Tf 48 285 Td (4. Documentacao) Tj ET
+BT /F1 11 Tf 48 266 Td () Tj ET
+BT /F1 11 Tf 48 250 Td (Os links da master abaixo passam a incluir os novos documentos depois da promocao do) Tj ET
+BT /F1 11 Tf 48 234 Td (PR. Antes de enviar, abrir cada link e conferir seu conteudo.) Tj ET
+BT /F1 11 Tf 48 218 Td () Tj ET
+BT /F1 11 Tf 48 202 Td (https://github.com/Venomouus/Oficina-Mecanica/blob/master/docs/entrega/README.md) Tj ET
+BT /F1 11 Tf 48 186 Td () Tj ET
+BT /F1 11 Tf 48 170 Td (https://github.com/Venomouus/Oficina-Mecanica/blob/master/docs/entrega/arquitetura.md) Tj ET
+BT /F1 11 Tf 48 154 Td () Tj ET
+BT /F1 11 Tf 48 138 Td (https://github.com/Venomouus/Oficina-Mecanica/blob/master/local/README.md) Tj ET
+BT /F1 11 Tf 48 122 Td () Tj ET
+BT /F1 11 Tf 48 106 Td (https://github.com/Venomouus/Oficina-infra-database/tree/master/docs) Tj ET
+BT /F1 11 Tf 48 90 Td () Tj ET
+BT /F1 11 Tf 48 74 Td (https://github.com/Venomouus/Oficina-infra-kubernetes/tree/master/docs) Tj ET
+BT /F1 11 Tf 48 58 Td () Tj ET
+BT /F1 9 Tf 48 30 Td (Tech Challenge - 1/3) Tj ET
+endstream
+endobj
+14 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 13 0 R /Annots [4 0 R 5 0 R 6 0 R 7 0 R 8 0 R 9 0 R 10 0 R 11 0 R 12 0 R] >>
+endobj
+15 0 obj
+<< /Type /Annot /Subtype /Link /Rect [48 787 548 801] /Border [0 0 0] /A << /S /URI /URI (https://github.com/Venomouus/Oficina-serverless/tree/master/docs) >> >>
+endobj
+16 0 obj
+<< /Type /Annot /Subtype /Link /Rect [48 701 548 715] /Border [0 0 0] /A << /S /URI /URI (https://tyza3bgnt9.execute-api.us-east-1.amazonaws.com) >> >>
+endobj
+17 0 obj
+<< /Type /Annot /Subtype /Link /Rect [48 669 548 683] /Border [0 0 0] /A << /S /URI /URI (https://5fzdgx69ni.execute-api.us-east-1.amazonaws.com) >> >>
+endobj
+18 0 obj
+<< /Length 3202 >>
+stream
+BT /F1 11 Tf 48 790 Td (https://github.com/Venomouus/Oficina-serverless/tree/master/docs) Tj ET
+BT /F1 11 Tf 48 774 Td () Tj ET
+BT /F1 14 Tf 48 758 Td (Endpoints AWS \(homologacao e producao; rotas de cliente exigem) Tj ET
+BT /F1 14 Tf 48 739 Td (JWT\)) Tj ET
+BT /F1 11 Tf 48 720 Td () Tj ET
+BT /F1 11 Tf 48 704 Td (https://tyza3bgnt9.execute-api.us-east-1.amazonaws.com) Tj ET
+BT /F1 11 Tf 48 688 Td () Tj ET
+BT /F1 11 Tf 48 672 Td (https://5fzdgx69ni.execute-api.us-east-1.amazonaws.com) Tj ET
+BT /F1 11 Tf 48 656 Td () Tj ET
+BT /F1 14 Tf 48 640 Td (5. Funcionalidades demonstradas) Tj ET
+BT /F1 11 Tf 48 621 Td () Tj ET
+BT /F1 11 Tf 48 605 Td (- Autenticacao por CPF: consulta de cliente existente/ativo, JWT RSA e consumo das) Tj ET
+BT /F1 11 Tf 48 589 Td (APIs protegidas.) Tj ET
+BT /F1 11 Tf 48 573 Td () Tj ET
+BT /F1 11 Tf 48 557 Td (- Ordens de servico: abertura, aprovacao, execucao, finalizacao e entrega; isolamento) Tj ET
+BT /F1 11 Tf 48 541 Td (por cliente com retorno 404 e separacao de acesso administrativo.) Tj ET
+BT /F1 11 Tf 48 525 Td () Tj ET
+BT /F1 11 Tf 48 509 Td (- Observabilidade com OpenTelemetry, Grafana, Prometheus, Loki e Tempo: latencia,) Tj ET
+BT /F1 11 Tf 48 493 Td (volume diario de OS, medias de periodos reais por status, erros, logs correlacionados) Tj ET
+BT /F1 11 Tf 48 477 Td (e traces da API.) Tj ET
+BT /F1 11 Tf 48 461 Td () Tj ET
+BT /F1 11 Tf 48 445 Td (- Regras de alerta provisionadas para falhas de OS e coleta indisponivel. Healthchecks) Tj ET
+BT /F1 11 Tf 48 429 Td (separados de processo e banco.) Tj ET
+BT /F1 11 Tf 48 413 Td () Tj ET
+BT /F1 11 Tf 48 397 Td (- Quatro repositorios, workflows CI, Terraform, manifests Kubernetes e separacao entre) Tj ET
+BT /F1 11 Tf 48 381 Td (migracoes e runtime da API.) Tj ET
+BT /F1 11 Tf 48 365 Td () Tj ET
+BT /F1 11 Tf 48 349 Td (- Diagramas de componentes, sequencia, modelo relacional e decisoes arquiteturais) Tj ET
+BT /F1 11 Tf 48 333 Td (documentadas.) Tj ET
+BT /F1 11 Tf 48 317 Td () Tj ET
+BT /F1 14 Tf 48 301 Td (6. Limites e requisitos ainda pendentes) Tj ET
+BT /F1 11 Tf 48 282 Td () Tj ET
+BT /F1 11 Tf 48 266 Td (- Workflows CD e runners Academy configurados; conferir execucoes verdes das branches) Tj ET
+BT /F1 11 Tf 48 250 Td (develop/master apos a promocao dos PRs.) Tj ET
+BT /F1 11 Tf 48 234 Td () Tj ET
+BT /F1 11 Tf 48 218 Td (- Um EKS e um RDS compartilhados por ambientes separados. RDS Single-AZ e) Tj ET
+BT /F1 11 Tf 48 202 Td (monitoramento com armazenamento temporario: concessoes para economia no laboratorio.) Tj ET
+BT /F1 11 Tf 48 186 Td () Tj ET
+BT /F1 11 Tf 48 170 Td (- Sondas HTTP de uptime e metricas de pods estao no EKS. Alertas nao incluem envio) Tj ET
+BT /F1 11 Tf 48 154 Td (externo de e-mail/Slack.) Tj ET
+BT /F1 11 Tf 48 138 Td () Tj ET
+BT /F1 11 Tf 48 122 Td (- Notificacoes serverless ponta a ponta permanecem pendentes. O autenticador local) Tj ET
+BT /F1 11 Tf 48 106 Td (possui logs proprios, sem exportacao OTLP integrada.) Tj ET
+BT /F1 11 Tf 48 90 Td () Tj ET
+BT /F1 11 Tf 48 74 Td (- Master protegida e acesso de soat-architecture confirmados nos quatro repositorios) Tj ET
+BT /F1 11 Tf 48 58 Td (pela API GitHub.) Tj ET
+BT /F1 9 Tf 48 30 Td (Tech Challenge - 2/3) Tj ET
+endstream
+endobj
+19 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 18 0 R /Annots [15 0 R 16 0 R 17 0 R] >>
+endobj
+20 0 obj
+<< /Length 1297 >>
+stream
+BT /F1 11 Tf 48 790 Td () Tj ET
+BT /F1 11 Tf 48 774 Td (- Este pacote nao garante atendimento integral ao enunciado nem uma nota especifica.) Tj ET
+BT /F1 11 Tf 48 758 Td () Tj ET
+BT /F1 14 Tf 48 742 Td (7. Executar a demonstracao) Tj ET
+BT /F1 11 Tf 48 723 Td () Tj ET
+BT /F1 11 Tf 48 707 Td (AWS: consultar academy/README.md e executar python academy/demo.py com os) Tj ET
+BT /F1 11 Tf 48 691 Td (port-forwards ativos. Alternativa local: local/README.md.) Tj ET
+BT /F1 11 Tf 48 675 Td () Tj ET
+BT /F1 11 Tf 48 659 Td (docker compose -f local/compose.yml up -d --build) Tj ET
+BT /F1 11 Tf 48 643 Td () Tj ET
+BT /F1 11 Tf 48 627 Td (python local/demo.py) Tj ET
+BT /F1 11 Tf 48 611 Td () Tj ET
+BT /F1 11 Tf 48 595 Td (Grafana: http://127.0.0.1:13000/d/oficina-local \(admin / admin-local-demo\). Swagger) Tj ET
+BT /F1 11 Tf 48 579 Td (API: http://127.0.0.1:18080/swagger. Essas URLs so funcionam na maquina que executa o) Tj ET
+BT /F1 11 Tf 48 563 Td (Compose, nao sao deploys publicos.) Tj ET
+BT /F1 11 Tf 48 547 Td () Tj ET
+BT /F1 11 Tf 48 531 Td (Credenciais e dados publicados no Compose sao exclusivos da demonstracao local. Nao) Tj ET
+BT /F1 11 Tf 48 515 Td (publicar o ambiente diretamente na internet.) Tj ET
+BT /F1 11 Tf 48 499 Td () Tj ET
+BT /F1 9 Tf 48 30 Td (Tech Challenge - 3/3) Tj ET
+endstream
+endobj
+21 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 20 0 R /Annots [] >>
+endobj
+xref
+0 22
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000136 00000 n 
+0000000233 00000 n 
+0000000391 00000 n 
+0000000551 00000 n 
+0000000717 00000 n 
+0000000881 00000 n 
+0000001074 00000 n 
+0000001272 00000 n 
+0000001459 00000 n 
+0000001641 00000 n 
+0000001823 00000 n 
+0000004727 00000 n 
+0000004922 00000 n 
+0000005100 00000 n 
+0000005268 00000 n 
+0000005436 00000 n 
+0000008691 00000 n 
+0000008850 00000 n 
+0000010200 00000 n 
+trailer
+<< /Size 22 /Root 1 0 R >>
+startxref
+10339
+%%EOF

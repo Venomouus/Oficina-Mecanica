@@ -9,6 +9,17 @@ public static class AwsRuntimeConfiguration
 {
     public static async Task LoadAsync(ConfigurationManager config, bool migrate)
     {
+        // Academy cannot create the IRSA roles used in a regular AWS account.
+        // The deployment identity copies only the required secret into a mounted
+        // Kubernetes Secret. Pods do not receive Academy credentials or node IAM access.
+        var secretDirectory = config["AwsRuntime:SecretDirectory"];
+        if (!string.IsNullOrWhiteSpace(secretDirectory))
+        {
+            await LoadAsync(config, migrate, (arn, token) => File.ReadAllTextAsync(
+                Path.Combine(secretDirectory, arn == Required(config, "AwsRuntime:DatabaseSecretArn")
+                    ? "database.json" : "api.json"), token));
+            return;
+        }
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
         using var client = new AmazonSecretsManagerClient(new AmazonSecretsManagerConfig { MaxErrorRetry = 1 });
         await LoadAsync(config, migrate, async (arn, token) =>

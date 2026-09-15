@@ -1,0 +1,90 @@
+name: oficina-entrega-local
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: oficina
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres-local-demo
+    volumes:
+      - demo-db:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -h 127.0.0.1 -U postgres -d oficina']
+      interval: 3s
+      timeout: 3s
+      retries: 30
+  api:
+    build:
+      context: ..
+    image: oficina-api:entrega-local
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: Host=db;Database=oficina;Username=postgres;Password=postgres-local-demo
+      ClienteJwt__Enabled: 'true'
+      ClienteJwt__Issuer: http://127.0.0.1:5081
+      ClienteJwt__Audience: oficina-api
+      Observability__Enabled: 'true'
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://lgtm:4317
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      OTEL_METRIC_EXPORT_INTERVAL: '5000'
+      Logging__LogLevel__Microsoft.EntityFrameworkCore: Warning
+    ports:
+      - '127.0.0.1:18080:8080'
+      - '127.0.0.1:15081:5081'
+    depends_on:
+      db:
+        condition: service_healthy
+      lgtm:
+        condition: service_started
+  auth:
+    # Shared network namespace keeps the existing loopback-only Development issuer policy.
+    network_mode: service:api
+    build:
+      context: ../../Oficina-Serverless/Oficina-serverless
+      dockerfile_inline: |
+        FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+        WORKDIR /src
+        COPY Directory.Build.props ./
+        COPY src/Oficina.Autenticacao/ src/Oficina.Autenticacao/
+        COPY src/Oficina.Autenticacao.Local/ src/Oficina.Autenticacao.Local/
+        RUN dotnet publish src/Oficina.Autenticacao.Local -c Release -o /out
+        FROM mcr.microsoft.com/dotnet/aspnet:8.0
+        WORKDIR /app
+        COPY --from=build /out .
+        USER 1654
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:5081
+      DB_CONNECTION_STRING: Host=db;Database=oficina;Username=postgres;Password=postgres-local-demo
+      JWT_PRIVATE_KEY_FILE: /tmp/auth.local.pem
+      JWT_ISSUER: http://127.0.0.1:5081
+      JWT_AUDIENCE: oficina-api
+      JWT_KEY_ID: local-demo
+      JWT_LIFETIME_SECONDS: '900'
+    command: [sh, -c, 'dotnet Oficina.Autenticacao.Local.dll --generate-dev-key /tmp/auth.local.pem && exec dotnet Oficina.Autenticacao.Local.dll']
+    read_only: true
+    tmpfs: [/tmp]
+    depends_on:
+      api:
+        condition: service_started
+  lgtm:
+    image: grafana/otel-lgtm:0.33.0
+    environment:
+      GF_PATHS_PROVISIONING: /etc/grafana/provisioning
+      GF_AUTH_ANONYMOUS_ENABLED: 'false'
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin-local-demo
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /demo-dashboards/oficina.json
+    ports:
+      - '127.0.0.1:13000:3000'
+      - '127.0.0.1:19090:9090'
+      - '127.0.0.1:13200:3200'
+      - '127.0.0.1:13100:3100'
+    volumes:
+      - demo-observability:/data
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/demo-dashboards:ro
+volumes:
+  demo-db:
+  demo-observability:

@@ -1,0 +1,508 @@
+{
+  "uid": "oficina-local",
+  "title": "Oficina — demonstracao local",
+  "schemaVersion": 39,
+  "version": 1,
+  "timezone": "utc",
+  "refresh": "5s",
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "OS criadas hoje (UTC)",
+      "type": "stat",
+      "description": "Contagem real do banco desde 00:00 UTC. Grafico diario abaixo preserva dias anteriores enquanto houver dados locais.",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "oficina-prom"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "max(oficina_os_today)",
+          "legendFormat": "{{status}}{{route}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Coleta do banco OK (1=sim)",
+      "type": "stat",
+      "description": "",
+      "gridPos": {
+        "x": 6,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "oficina-prom"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "max(oficina_business_collection_ok)",
+          "legendFormat": "{{status}}{{route}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Respostas 5xx de OS / 5 minutos",
+      "type": "stat",
+      "description": "",
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "oficina-prom"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(oficina_os_failures_total[5m])) or vector(0)",
+          "legendFormat": "{{status}}{{route}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Idade da ultima coleta",
+      "type": "stat",
+      "description": "",
+      "gridPos": {
+        "x": 18,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "oficina-prom"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "time() - max(oficina_business_last_success_unixtime)",
+          "legendFormat": "{{status}}{{route}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 5,
+      "title": "Latencia p95 por rota",
+      "type": "timeseries",
+      "description": "",
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "oficina-prom"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le, route) (rate(oficina_http_duration_seconds_bucket[5m])))",
+          "legendFormat": "{{status}}{{route}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "Requisicoes por segundo",
+      "type": "timeseries",
+      "description": "",
+      "gridPos": {
+        "x": 12,
+        "y": 4,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "oficina-prom"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (route) (rate(oficina_http_requests_total[5m]))",
+          "legendFormat": "{{status}}{{route}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 7,
+      "title": "Tempo medio por status — periodos encerrados / 24h",
+      "type": "timeseries",
+      "description": "Somente periodos reais com inicio e fim conhecidos, encerrados nas ultimas 24h. Sem amostras = sem dados. Finalizada representa o periodo entre finalizacao e entrega.",
+      "gridPos": {
+        "x": 0,
+        "y": 11,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "oficina-prom"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "oficina_os_status_duration_seconds",
+          "legendFormat": "{{status}}{{route}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "Quantidade de amostras por status / 24h",
+      "type": "timeseries",
+      "description": "",
+      "gridPos": {
+        "x": 12,
+        "y": 11,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "oficina-prom"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "oficina_os_status_samples",
+          "legendFormat": "{{status}}{{route}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 9,
+      "title": "Volume de OS por dia UTC — ultimos 7 dias",
+      "type": "table",
+      "description": "Contagem por data de criacao real no banco (UTC), nao por janela movel. Dias sem registros podem nao aparecer.",
+      "gridPos": {
+        "x": 0,
+        "y": 18,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "oficina-prom"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "oficina_os_daily",
+          "legendFormat": "{{status}}{{route}}",
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 10,
+      "title": "Falhas HTTP por rota (5xx)",
+      "type": "timeseries",
+      "description": "",
+      "gridPos": {
+        "x": 12,
+        "y": 18,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "oficina-prom"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (route) (rate(oficina_http_requests_total{status_code=~\"5..\"}[5m]))",
+          "legendFormat": "{{status}}{{route}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 11,
+      "title": "Memoria do processo API",
+      "type": "timeseries",
+      "description": "Processo .NET em Docker; nao representa memoria total de um cluster Kubernetes.",
+      "gridPos": {
+        "x": 0,
+        "y": 25,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "oficina-prom"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "oficina_process_memory_bytes",
+          "legendFormat": "{{status}}{{route}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 12,
+      "title": "CPU do processo API (cores)",
+      "type": "timeseries",
+      "description": "Tempo de CPU do processo; nao substitui metricas dos nodes/pods de Kubernetes.",
+      "gridPos": {
+        "x": 12,
+        "y": 25,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "oficina-prom"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(oficina_process_cpu_seconds_total[1m])",
+          "legendFormat": "{{status}}{{route}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 13,
+      "title": "Logs correlacionados da API",
+      "type": "logs",
+      "gridPos": {
+        "x": 0,
+        "y": 32,
+        "w": 24,
+        "h": 9
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "oficina-loki"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "{service_name=\"Oficina.API\"}"
+        }
+      ],
+      "options": {
+        "showTime": true
+      }
+    }
+  ],
+  "tags": [
+    "oficina",
+    "local",
+    "tech-challenge"
+  ],
+  "links": [
+    {
+      "title": "Traces: Explore → Oficina Traces",
+      "url": "/explore",
+      "type": "link"
+    }
+  ]
+}
