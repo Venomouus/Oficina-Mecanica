@@ -54,7 +54,7 @@ def main():
         'Um EKS e um RDS compartilhados por ambientes separados. RDS Single-AZ e monitoramento com armazenamento temporario: concessoes para economia no laboratorio.',
         'Sondas HTTP de uptime e metricas de pods estao no EKS. Alertas nao incluem envio externo de e-mail/Slack.',
         'Notificacoes serverless ponta a ponta permanecem pendentes. O autenticador local possui logs proprios, sem exportacao OTLP integrada.',
-        'Master protegida e acesso de soat-architecture confirmados nos quatro repositorios pela API GitHub.',
+        'Master protegida nos quatro repositorios. A situacao efetiva de cadastro do avaliador consta na secao 3; leitura publica nao comprova convite aceito.',
         'Este pacote nao garante atendimento integral ao enunciado nem uma nota especifica.'
     ]:
         paragraph('- ' + item)
