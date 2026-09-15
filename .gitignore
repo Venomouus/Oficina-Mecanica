@@ -45,3 +45,6 @@ deploy/generated/
 .env*
 __pycache__/
 .database-contract/
+local/.aws-sdk.local/
+academy/.work.local/
+*.tfplan

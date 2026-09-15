@@ -6,11 +6,9 @@ As entidades, migrations e regras continuam em `Oficina-Mecanica`, nas quatro
 camadas .NET existentes. O repositorio `Oficina-infra-database` provisionara o RDS;
 nao deve gerenciar as mesmas tabelas pelo Terraform.
 
-`Clientes.Ativo` representa a situacao cadastral consultavel pela futura Lambda de
-autenticacao. Novos clientes e os clientes migrados comecam ativos. Desativar nao
-exclui veiculos nem ordens e nao invalida automaticamente JWTs ja emitidos.
-Nesta etapa, as rotas antigas continuam com suas regras de acesso existentes;
-a verificacao de cliente ativo na autenticacao serverless ainda esta pendente.
+`Clientes.Ativo` e consultado pelo autenticador CPF e pela API nas requisicoes
+protegidas do cliente. Novos clientes comecam ativos. A desativacao preserva veiculos
+ e ordens; mesmo um JWT ainda valido nao permite acesso de cliente inativo.
 
 ## Modelo relacional (recorte das entidades afetadas)
 
@@ -65,11 +63,10 @@ nao sao resolvidas por esse token; isso exige controle de concorrencia do estoqu
 
 ## Fluxo preservado
 
-`POST /api/ordens-servico` continua calculando o orcamento e retornando
-`Aguardando Aprovacao`. A entidade passa por `Recebida` durante a criacao e ambos
-os registros sao salvos juntos. Nenhum periodo `Diagnostico` e criado nesse caminho.
-As regras de dominio ainda suportam `Recebida -> Diagnostico`; a API atual nao
-oferece uma abertura que permaneca em `Recebida`.
+A abertura pelo cliente e a abertura administrativa padrao retornam Aguardando
+Aprovacao. Somente o administrador pode usar `iniciarEmDiagnostico: true` na abertura
+para registrar Diagnostico real antes de enviar o orcamento para aprovacao.
+A demonstracao local percorre os dois caminhos, sem fabricar datas historicas.
 
 A aprovacao e o inicio administrativo da execucao registram `Execucao`; finalizar
 e entregar registram os respectivos periodos. Recusar ou reenviar um orcamento
@@ -104,11 +101,10 @@ com a conexao do seu PostgreSQL e execute:
 dotnet ef database update --project Oficina.Infrastructure --startup-project Oficina.API
 ```
 
-A API ja executa migrations ao iniciar fora de `Testing`. Portanto, iniciar a API
-ou `docker compose up --build` tambem atualiza o banco configurado. Antes de usar
-um banco com dados importantes, faca backup e ensaie a migracao em uma copia.
-O rollback `Down` remove o historico e o campo Ativo; ele perde esses dados.
-Para EKS, a execucao coordenada de migrations devera fazer parte do deploy futuro.
+Migracoes automaticas sao habilitadas no ambiente Development usado no Compose
+local. No EKS, o Job de migracoes usa credencial propria e o runtime nao aplica DDL.
+Veja [deploy EKS](deploy-eks.md). O rollback Down remove historico e Ativo e perde
+esses dados; ensaie migracoes em copia antes de usar dados importantes.
 
 ## Validacao
 
@@ -140,4 +136,4 @@ No Swagger existente, autentique como administrador e teste:
 
 O contrato de historico inclui sequencia, status, inicio, fim, data de registro e
 duracao. Estes dados preparam as metricas por status exigidas no Tech Challenge;
-o dashboard e o fluxo de demonstracao do diagnostico ainda precisam ser resolvidos.
+o dashboard e o fluxo de Diagnostico estao descritos em [local/README.md](../local/README.md).

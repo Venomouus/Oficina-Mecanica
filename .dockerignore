@@ -25,6 +25,8 @@ coverage.cobertura.xml
 infra/
 aws/
 deploy/
+local/
+academy/
 **/.terraform/
 *.tfstate
 *.tfstate.*

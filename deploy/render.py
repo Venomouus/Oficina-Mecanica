@@ -13,6 +13,7 @@ def require(condition, message):
 
 def render(config):
     api, gateway, backend = (config[key] for key in ("api", "gateway", "backend"))
+    academy = api.get("academy_mode", False)
     env = api["environment"]
     require(env in ("staging", "producao"), "Ambiente invalido")
     namespace = f"oficina-{env}"
@@ -31,7 +32,7 @@ def render(config):
     issuer = gateway["issuer"]
     require(re.fullmatch(rf"https://[a-z0-9]+\.execute-api\.{region}\.amazonaws\.com", issuer)
             and gateway["audience"] == "oficina-api", "Emissor Gateway invalido")
-    require(api["role_arns"]["app"] != api["role_arns"]["migrations"], "Roles devem ser separados")
+    require(academy or api["role_arns"]["app"] != api["role_arns"]["migrations"], "Roles devem ser separados")
     for role in api["role_arns"].values():
         require(re.fullmatch(rf"arn:aws:iam::{account}:role/[A-Za-z0-9+=,.@_/-]+", role), "Role de outra conta")
     for purpose in ("app", "migrations", "api"):
@@ -64,6 +65,12 @@ def render(config):
                "ClienteJwt__Audience": gateway["audience"], "Jwt__Issuer": f"oficina-{env}",
                "Jwt__Audience": f"oficina-{env}-admin"}
     migration = {**common, "AwsRuntime__DatabaseSecretArn": api["secret_arns"]["migrations"]}
+    if academy:
+        runtime["AwsRuntime__SecretDirectory"] = "/run/oficina-secrets"
+        migration["AwsRuntime__SecretDirectory"] = "/run/oficina-secrets"
+    if config.get("otlp_endpoint"):
+        runtime.update({"Observability__Enabled": "true", "OTEL_EXPORTER_OTLP_ENDPOINT": config["otlp_endpoint"],
+                        "OTEL_EXPORTER_OTLP_PROTOCOL": "grpc", "OTEL_METRIC_EXPORT_INTERVAL": "10000"})
     image = f"{api['image_repository']}@{config['image_digest']}"
 
     def pod(purpose, values):
@@ -77,21 +84,29 @@ def render(config):
                           "limits": {"cpu": "500m", "memory": "512Mi"}},
             "volumeMounts": [{"name": "tmp", "mountPath": "/tmp"}],
         }
+        secret_volumes = []
+        if academy:
+            container["volumeMounts"].append({"name": "runtime-secrets", "mountPath": "/run/oficina-secrets", "readOnly": True})
+            secret_volumes.append({"name": "runtime-secrets", "secret": {"secretName": service_account, "defaultMode": 288}})
         return {"metadata": {"labels": {"app": service_account}, "annotations": {"oficina/release": config["release"]}},
                 "spec": {"serviceAccountName": service_account, "automountServiceAccountToken": False,
                          "securityContext": {"runAsNonRoot": True, "runAsUser": 1654, "runAsGroup": 1654,
                                              "fsGroup": 1654, "seccompProfile": {"type": "RuntimeDefault"}},
                          "terminationGracePeriodSeconds": 30,
-                         "containers": [container], "volumes": [{"name": "tmp", "emptyDir": {"sizeLimit": "64Mi"}}]}}
+                         "containers": [container], "volumes": [{"name": "tmp", "emptyDir": {"sizeLimit": "64Mi"}}, *secret_volumes]}}
 
     setup = []
     for purpose, name in (("app", "oficina-api"), ("migrations", "oficina-migrations")):
         sa = resource("ServiceAccount", name, automountServiceAccountToken=False)
-        sa["metadata"]["annotations"] = {"eks.amazonaws.com/role-arn": api["role_arns"][purpose],
-                                          "eks.amazonaws.com/sts-regional-endpoints": "true"}
+        if not academy:
+            sa["metadata"]["annotations"] = {"eks.amazonaws.com/role-arn": api["role_arns"][purpose],
+                                              "eks.amazonaws.com/sts-regional-endpoints": "true"}
         setup.append(sa)
         ingress = [] if purpose == "migrations" else [{"from": [{"ipBlock": {"cidr": cidr}} for cidr in config["alb_subnet_cidrs"]],
                                                        "ports": [{"protocol": "TCP", "port": 8080}]}]
+        if config.get("otlp_endpoint") and purpose == "app":
+            ingress.append({"from": [{"namespaceSelector": {"matchLabels": {
+                "kubernetes.io/metadata.name": "observability"}}}], "ports": [{"protocol": "TCP", "port": 8080}]})
         setup.append(resource("NetworkPolicy", name, {
             "podSelector": {"matchLabels": {"app": name}}, "policyTypes": ["Ingress", "Egress"], "ingress": ingress,
             "egress": [
@@ -103,6 +118,10 @@ def render(config):
                 {"to": [{"ipBlock": {"cidr": "0.0.0.0/0", "except": ["169.254.0.0/16", "127.0.0.0/8"]}}],
                  "ports": [{"protocol": "TCP", "port": 443}]},
             ]}, "networking.k8s.io/v1"))
+        if config.get("otlp_endpoint") and purpose == "app":
+            setup[-1]["spec"]["egress"].append({
+                "to": [{"namespaceSelector": {"matchLabels": {"kubernetes.io/metadata.name": "observability"}}}],
+                "ports": [{"protocol": "TCP", "port": 4317}]})
 
     template = pod("migrations", migration)
     template["spec"]["restartPolicy"] = "Never"

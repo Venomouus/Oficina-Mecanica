@@ -1,0 +1,20 @@
+apiVersion: 1
+datasources:
+  - name: Oficina Metrics
+    uid: oficina-prom
+    type: prometheus
+    url: http://localhost:9090
+    access: proxy
+    isDefault: true
+    jsonData:
+      timeInterval: 5s
+  - name: Oficina Logs
+    uid: oficina-loki
+    type: loki
+    url: http://localhost:3100
+    access: proxy
+  - name: Oficina Traces
+    uid: oficina-tempo
+    type: tempo
+    url: http://localhost:3200
+    access: proxy

@@ -1,11 +1,21 @@
 # Oficina Mecanica API
 
+## Entrega do Tech Challenge - AWS Academy
+
+EKS, RDS PostgreSQL, API Gateway e Lambda provisionados via Terraform.
+O fluxo CPF/JWT/OS foi demonstrado na AWS; veja [evidencias](docs/entrega/evidencias-aws.json).
+Grafana, Prometheus, Loki e Tempo recebem telemetria da API e metricas do Kubernetes.
+O [pacote de entrega](docs/entrega/README.md) inclui arquitetura, roteiro de video e PDF.
+[academy/README.md](academy/README.md) explica o deploy. A alternativa Docker permanece
+disponivel em [local/README.md](local/README.md).
+
 ## Preparacao para EKS
 
 Deploy da API e Job de migrations separados, segredos via IRSA/Secrets Manager,
 imagem sem root e health checks distintos. Veja o [roteiro de deploy EKS](docs/deploy-eks.md).
-Codigo validado localmente; provisionamento AWS e deploy continuam pendentes.
-Manter `DEPLOY_ENABLED=false`. O laboratorio Kind existente permanece em `k8s/` e `infra/`.
+No Academy, reutilizamos LabRole e Secrets Kubernetes por finalidade. O workflow
+`academy-deploy.yml` usa runners locais autorizados; `DEPLOY_ENABLED` controla apenas
+o workflow GHCR antigo. O laboratorio Kind permanece em `k8s/` e `infra/`.
 
 MVP de back-end monolitico em ASP.NET Core 8 para gestao de clientes, veiculos, servicos, pecas/insumos e ordens de servico de uma oficina mecanica.
 
@@ -82,8 +92,7 @@ retornam `duracaoMinutos: null`.
 
 Veja [modelagem, migracao e roteiro de validacao](docs/modelagem-status-historico.md)
 e [ADR sobre o historico](docs/adrs/001-historico-status-os.md).
-Esta entrega prepara os dados para observabilidade; os dashboards e a integracao
-AWS ainda serao implementados.
+Os dados alimentam os dashboards de volume diario e tempo por status no Grafana.
 
 ## Fase 3 - Autorizacao de clientes com JWT
 
@@ -103,8 +112,7 @@ isso nao libera rotas anonimas. O login administrativo permanece disponivel.
 Veja [configuracao e teste local completo](docs/autenticacao-cliente-jwt.md),
 [exemplo sem segredos](config/cliente-jwt.example.json) e
 [ADR de autorizacao](docs/adrs/002-autorizacao-cliente-jwt.md).
-Esta etapa implementa a integracao local; API Gateway, deploy AWS e CD continuam
-pendentes. Mantenha `DEPLOY_ENABLED=false` durante o desenvolvimento local.
+A mesma integracao e usada pelo API Gateway e Lambda no Academy. O modo local foi preservado.
 
 
 ## Fase 2 - Evolucao, Infraestrutura e Automacao
@@ -251,7 +259,7 @@ Fluxo de contribuicao:
 develop -> feature/* -> PR para develop -> PR para master
 ```
 
-Ambientes GitHub preparados para o futuro deploy AWS:
+Ambientes do deploy AWS Academy:
 
 | Ambiente | Branch autorizada |
 |---|---|
@@ -267,9 +275,8 @@ no GHCR. O kind e temporario, existe apenas no runner e nao utiliza AWS.
 Com `DEPLOY_ENABLED=true`, o workflow Docker publica em pushes para `develop` e
 `master`, usando a tag do commit e, respectivamente, `develop` ou `latest`.
 PRs e execucoes manuais nunca publicam imagens. Essa publicacao ainda nao realiza
-deploy AWS: a infraestrutura, os jobs de deploy, o OIDC e o uso dos ambientes nos
-jobs serao implementados na etapa de nuvem. Alterar a variavel sozinha nao cria EKS
-nem RDS e nao entrega um deploy em homologacao ou producao.
+deploy AWS. O deploy Academy usa o workflow separado `academy-deploy.yml`, disparado
+por pushes em develop/master, com credenciais temporarias locais do laboratorio.
 
 Depois da primeira execucao bem-sucedida do PR, configure protecao de `develop` e
 `master` exigindo Pull Request e estes checks (nomes dos jobs exibidos no GitHub):
