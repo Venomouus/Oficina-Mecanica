@@ -54,7 +54,7 @@ execucao real da pipeline; se nao houver CD cloud, declare essa limitacao no vid
 | Bloco | Evidencia disponivel | Limite |
 |---|---|---|
 | Autenticacao CPF/JWT e autorizacao | Lambda/RDS/Gateway/API demonstrados em homologacao | Evidencias em evidencias-aws.json |
-| Quatro repositorios e CI/CD | Master protegida e avaliador com acesso confirmados; workflows CD/runners configurados | Publicar/promover PRs e registrar execucao CD verde |
+| Quatro repositorios e CI/CD | Master protegida nos quatro; workflows CD/runners configurados | Avaliador cadastrado na API; cadastro nos outros tres ainda pendente |
 | Terraform/RDS/EKS/Gateway | Recursos provisionados na conta Academy | Um cluster/RDS compartilhado por dois ambientes; RDS Single-AZ |
 | Observabilidade | OTLP, Grafana/Prometheus/Loki/Tempo, alertas, cAdvisor e sondas HTTP no EKS | Dados temporarios; sem envio externo de alertas |
 | Negocio | OS por dia; medias de periodos concluidos, inclusive Diagnostico | Janela UTC; nao representa carga real de producao |

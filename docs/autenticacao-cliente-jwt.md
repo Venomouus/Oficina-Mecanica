@@ -150,9 +150,4 @@ Tambem foi executado o fluxo com PostgreSQL 16 descartavel, os dois hosts HTTP e
 discovery/JWKS real: CPF, JWT, criacao, consulta, aprovacao, isolamento, desativacao
 e indisponibilidade do banco. Isso valida a integracao local, sem comprovar deploy AWS.
 
-## Etapas seguintes do Tech Challenge
 
-API Gateway, RDS/EKS e Lambda na AWS, entrega de notificacoes, CD automatico dos
-dois ambientes, logs/traces integrados, dashboards, alertas e documentacao completa
-ainda precisam de implementacao/validacao. Mantenha `DEPLOY_ENABLED=false` nesta
-etapa. A demonstracao final exigira esses recursos funcionando na nuvem.

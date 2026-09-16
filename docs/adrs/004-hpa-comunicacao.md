@@ -1,6 +1,6 @@
 # ADR 004 — Comunicacao HTTP e escalabilidade da API
 
-Status: aceita no codigo; operacao na nuvem pendente. Data: 2026-09-14.
+Status: aceita no codigo; Data: 2026-09-14.
 
 ## Decisao
 
@@ -18,7 +18,7 @@ no PostgreSQL. Migracoes devem ser coordenadas separadamente no deploy EKS.
 ## Consequencias
 
 HPA depende de metricas disponiveis e capacidade dos nodes; declaracao YAML nao prova
-escalabilidade. O Compose da demonstracao executa uma API, sem HPA. Escala, failover,
+escalabilidade. O Compose da demonstracao executa uma API. Escala, failover,
 balanceamento e limites de conexao com banco precisam de validacao no cluster.
 Chamadas sincronas simplificam a demonstracao, mas exigem limites de tempo e tratamento
 de indisponibilidade. O historico e a concorrencia da OS sao controlados no dominio.

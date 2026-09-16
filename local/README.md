@@ -1,8 +1,7 @@
 # Demonstracao do Tech Challenge sem AWS
 
 Este ambiente executa API, autenticador CPF, PostgreSQL e observabilidade no Docker.
-O Grafana LGTM reune OpenTelemetry Collector, Prometheus, Loki e Tempo. E uma
-configuracao de desenvolvimento/demonstracao, nao uma implantacao de producao.
+O Grafana LGTM reune OpenTelemetry Collector, Prometheus, Loki e Tempo.
 
 ## Iniciar
 
@@ -44,7 +43,7 @@ ficam somente na memoria do script. O resultado fica em `local/evidencias.local.
 | Readiness da API | http://127.0.0.1:18080/health | anonimo; verifica banco |
 | Liveness da API | http://127.0.0.1:18080/health/live | anonimo; verifica processo |
 
-Essas senhas sao exclusivas do laboratorio, publicadas intencionalmente. As portas
+Essas senhas sao exclusivas do projeto, publicadas intencionalmente. As portas
 estao restritas a 127.0.0.1. Nao publique este Compose na internet.
 A chave RSA e gerada no tmpfs do autenticador e nunca versionada; depois de recriar
 o autenticador, obtenha um novo JWT. O issuer interno usa 127.0.0.1:5081 porque API
@@ -106,13 +105,3 @@ docker compose -f local/compose.yml start
 `stop` preserva volumes. Para diagnosticar falhas: `docker compose -f local/compose.yml ps`
 e `docker compose -f local/compose.yml logs --tail 60`. Nunca compartilhe tokens de
 Swagger ou conteudos de segredos. A autenticacao CPF consulta o cadastro ativo.
-
-## Limites para a avaliacao
-
-Nao demonstra API Gateway implantado, Lambda gerenciada, RDS gerenciado, EKS, HPA em
-operacao, dashboards de CPU/memoria do cluster, deploy automatico cloud, notificacoes
-serverless ou alta disponibilidade. O codigo Terraform e os manifests desses
-componentes continuam nos quatro repositorios. CI/teste Kind nao equivale a CD cloud.
-Veja [roteiro de entrega](../docs/entrega/README.md) e [arquitetura](../docs/entrega/arquitetura.md).
-
-Referencia da ferramenta escolhida: https://github.com/grafana/docker-otel-lgtm/tree/v0.33.0

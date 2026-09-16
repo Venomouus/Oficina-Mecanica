@@ -4,8 +4,7 @@ Status: aceita nesta implementacao.
 
 ## Contexto
 
-O Tech Challenge exige visibilidade do tempo por status. Somente o status atual
-e os timestamps globais da OS nao descrevem os periodos intermediarios. A abertura
+O Tech Challenge exige visibilidade do tempo por status. A abertura
 atual retorna Aguardando Aprovacao e deve ser preservada por decisao do projeto.
 
 ## Decisao
@@ -28,6 +27,3 @@ O legado nao oferece tempos retroativos completos. Aberturas atuais nao produzem
 amostras de diagnostico. A demonstracao desse indicador exigira um fluxo acordado
 que realmente percorra a etapa, sem apresentar dados artificiais como reais.
 
-Esta tabela registra periodos de status, nao auditoria completa de autores,
-tentativas, recusas ou notificacoes. Nao foi adotado event sourcing: reconstruir
-todo o agregado por eventos seria uma mudanca maior que a necessidade atual.
