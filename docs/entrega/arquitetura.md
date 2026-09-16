@@ -124,13 +124,3 @@ de criacao e periodos encerrados em 24h; para volume grande, avaliar EXPLAIN, in
 e agregacao incremental antes de reduzir intervalos. A concorrencia da OS usa Versao;
 disputa de estoque entre OS distintas permanece uma limitacao conhecida.
 
-## Decisoes e referencias
-
-- [ADR de observabilidade local](../adrs/003-observabilidade-local.md).
-- [ADR de HPA e comunicacao](../adrs/004-hpa-comunicacao.md).
-- [RFC da entrega local e escolhas de plataforma](rfc-entrega-local.md).
-- [Historico e concorrencia](../adrs/001-historico-status-os.md).
-- [Autorizacao de clientes](../adrs/002-autorizacao-cliente-jwt.md).
-- [Modelagem temporal detalhada](../modelagem-status-historico.md).
-- [Deploy EKS e migrations](../deploy-eks.md).
-- RFCs e ADRs de plataforma/RDS/Gateway nos repositorios de infraestrutura.

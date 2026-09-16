@@ -1,8 +1,7 @@
 # Recursos AWS da API
 
 Root independente do laboratorio Kind em `../infra/`. Cria ECR, roles IRSA e
-container do segredo administrativo por ambiente. Nao cria rede, banco, cluster,
-Service, ALB, Gateway, valor secreto ou identidade de publicacao/deploy.
+container do segredo administrativo por ambiente. 
 
 Copiar `terraform.tfvars.json.example` para `terraform.tfvars.json` e preencher os
 outputs publicos reais da plataforma e do banco. O exemplo tem IDs ficticios.

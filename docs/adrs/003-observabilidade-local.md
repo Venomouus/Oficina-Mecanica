@@ -4,8 +4,7 @@ Status: aceita para laboratorio. Data: 2026-09-14.
 
 ## Contexto
 
-O Tech Challenge exige latencia, logs, traces, alertas e indicadores de OS. O acesso
-AWS esta indisponivel e a entrega precisa de evidencias executaveis sem conta paga.
+O Tech Challenge exige latencia, logs, traces, alertas e indicadores de OS. 
 
 ## Decisao
 
@@ -22,11 +21,6 @@ e memoria locais sao do processo, claramente distintas de metricas do Kubernetes
 
 ## Alternativas e consequencias
 
-Datadog/New Relic tambem atendem ao tipo de ferramenta solicitado, mas exigiriam
-configuracao externa. O formato OTLP permite trocar o destino futuramente.
+O formato OTLP permite trocar o destino futuramente.
 LGTM all-in-one simplifica a demonstracao, consome recursos locais e nao e uma
-topologia de producao/alta disponibilidade. Nao resolve CD cloud, monitoramento
-Kubernetes, notificacoes serverless nem uptime medido por sonda externa.
-Alertas ficam na interface Grafana; entrega externa e escalonamento sao pendentes.
-
-Referencia: https://github.com/grafana/docker-otel-lgtm/tree/v0.33.0
+topologia de producao/alta disponibilidade.

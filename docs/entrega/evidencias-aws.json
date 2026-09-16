@@ -1,10 +1,10 @@
 {
-  "executadoEmUtc": "2026-09-15T02:37:57.972730+00:00",
+  "executadoEmUtc": "2026-09-15T21:06:30.021147+00:00",
   "ambiente": "staging",
   "gateway": "https://tyza3bgnt9.execute-api.us-east-1.amazonaws.com",
   "ordens": [
-    "d84713a0-ae53-439e-ba41-1723373812b7",
-    "cc85585b-88d5-4f9c-ae87-3574bafb7bd7"
+    "076573c1-59c3-42b0-ac20-887c8a9f3c59",
+    "efe6ddb0-010e-4ff5-a26b-49ea7146dd8f"
   ],
   "verificacoes": [
     "Lambda CPF/RDS/JWT",
@@ -14,16 +14,6 @@
     "Healthcheck RDS/API",
     "Metricas de negocio",
     "Memoria de pods Kubernetes",
-    "Traces no Tempo",
-    "Logs no Loki",
-    "Sondas HTTP staging e producao saudaveis"
-  ],
-  "producao": {
-    "gateway": "https://5fzdgx69ni.execute-api.us-east-1.amazonaws.com",
-    "verificacoes": [
-      "Healthcheck 200",
-      "CPF/Lambda/RDS/JWT",
-      "GET protegido no Gateway 200"
-    ]
-  }
+    "Traces no Tempo"
+  ]
 }
