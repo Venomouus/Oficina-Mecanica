@@ -100,6 +100,10 @@ services:
       ASPNETCORE_URLS: http://+:8080
       Mongo__ConnectionString: mongodb://billing-db:27017
       RabbitMq__Host: rabbitmq
+      MercadoPago__AccessToken: ${MERCADO_PAGO_ACCESS_TOKEN:-}
+      MercadoPago__WebhookUrl: ${MERCADO_PAGO_WEBHOOK_URL:-}
+      MercadoPago__WebhookSecret: ${MERCADO_PAGO_WEBHOOK_SECRET:-}
+      MercadoPago__ExternalPosId: ${MERCADO_PAGO_EXTERNAL_POS_ID:-}
     ports:
       - "8082:8080"
     depends_on:
