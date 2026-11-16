@@ -34,3 +34,11 @@ kubectl port-forward -n oficina service/execution-service 8083:8083
 ```
 
 Os Swagger ficam disponíveis nas portas `8081`, `8082` e `8083`.
+
+> Os manifestos dos servicos agora exigem Secrets externos
+> `os-service-secrets`, `billing-service-secrets`,
+> `execution-service-secrets` e `mercado-pago-secrets`; o arquivo `infra.yaml` e
+> apenas demonstrativo e nao prepara um ambiente de producao. As imagens
+> sao publicadas no GHCR pelo CI, nao sao mais imagens locais `:local`.
+> Veja [Fase 4: deploy e observabilidade](./FASE4-DEPLOY-OBSERVABILIDADE.md)
+> antes de executar esses comandos.
