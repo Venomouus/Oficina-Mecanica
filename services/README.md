@@ -42,4 +42,4 @@ $order = Invoke-RestMethod -Method Post http://localhost:8081/api/orders -Conten
 Invoke-RestMethod http://localhost:8082/api/budgets
 ```
 
-O orçamento criado pelo evento pode ser aprovado com `POST /api/budgets/{id}/approve` e o pagamento de demonstração pode ser confirmado com `POST /api/budgets/{id}/payment`. A integração real com o Mercado Pago será adicionada na próxima etapa, mantendo estes contratos para o fluxo local.
+O orçamento criado pelo evento pode ser aprovado com `POST /api/budgets/{id}/approve`. Para testar o Mercado Pago real no Sandbox, use `POST /api/budgets/{id}/payment/preference`; a rota `POST /api/budgets/{id}/payment` apenas simula a confirmação local. Consulte o [passo a passo no repositório do Billing](https://github.com/Venomouus/oficina-billing-service/blob/main/TESTING-MERCADO-PAGO.md). A confirmação externa depende do webhook `POST /api/payments/webhook`.

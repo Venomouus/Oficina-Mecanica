@@ -14,6 +14,26 @@ orcamento gerado, pagamento local simulado e OS `FINALIZADA`. Isso nao testa
 o Mercado Pago externo. `infra-lab.yaml` usa `emptyDir`: qualquer recriacao
 dos pods de banco ou RabbitMQ perde os dados. Nao use o lab para dados reais.
 
+Para demonstrar o Checkout Pro real em sandbox no EKS, mantenha o port-forward
+`kubectl -n oficina port-forward svc/billing-service 8082:8082` e, em outro
+terminal, inicie `ngrok http http://127.0.0.1:8082`. O tunel precisa continuar
+aberto durante o pagamento. Na aplicacao do Mercado Pago Developers, selecione
+**Teste**, copie o Access Token de teste e configure em **Webhooks** a URL HTTPS
+exibida pelo ngrok com `/api/payments/webhook` ao final, evento **Pagamentos**.
+Copie tambem a assinatura secreta do Webhook de teste. Rode
+`./k8s/eks-lab/configure-mercado-pago.ps1` no seu proprio terminal: o script
+identifica a URL do ngrok, solicita as duas credenciais sem exibi-las, atualiza
+somente o Secret `mercado-pago-secrets` e reinicia o Billing. Nao envie
+credenciais pelo chat, nao as grave no Git e nao filme o terminal enquanto
+as insere. Para o checkout, use uma conta **compradora de teste**, diferente da
+conta vendedora, e uma OS nova. Aprovar o orcamento e obrigatorio antes de
+chamar `POST /api/budgets/{id}/payment/preference`; `POST .../payment` apenas
+simula o pagamento e nao fornece URL de checkout.
+Se o terminal nao aceitar a colagem no prompt protegido, copie o Access Token
+no navegador e execute `./k8s/eks-lab/configure-mercado-pago.ps1 -FromClipboard`.
+O script le e limpa a area de transferencia; quando solicitar, copie a
+assinatura do Webhook no navegador e apenas pressione Enter no terminal.
+
 Para recriar a infraestrutura interna e as credenciais aleatorias sem grava-las
 em Git, use `./k8s/eks-lab/setup-lab.ps1`. O script preserva as senhas ja
 existentes e reaplica os Secrets de conexao. Depois aplique

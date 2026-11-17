@@ -48,3 +48,8 @@ __pycache__/
 local/.aws-sdk.local/
 academy/.work.local/
 *.tfplan
+
+# Fase 4: cada microsservico possui seu proprio repositorio Git.
+/services/os-service/
+/services/billing-service/
+/services/execution-service/
