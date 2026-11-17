@@ -2,9 +2,9 @@
 
 Cada repositorio de servico executa build, testes com cobertura minima de 80%,
 SonarCloud com espera pelo Quality Gate e build Docker no PR. Um push em `main`
-so inicia `publish-deploy` apos as verificacoes passarem. Esse job publica no
-GHCR as tags do SHA e `latest`, aplica o manifesto do proprio servico, fixa a
-imagem pelo SHA e espera o rollout Kubernetes. O OS Service tambem exige o BDD
+so inicia `publish-deploy` apos as verificacoes passarem. Esse job assume uma
+role AWS via OIDC, publica no ECR privado a tag imutavel do SHA, aplica o
+manifesto do proprio servico e espera o rollout Kubernetes. O OS Service tambem exige o BDD
 distribuido antes de publicar.
 
 ## Preparar o cluster (uma vez)
@@ -22,18 +22,18 @@ distribuido antes de publicar.
    `mercado-pago-secrets`
    (`access-token`, `external-pos-id`, `webhook-url`, `webhook-secret`) com um
    gerenciador de segredos do cluster. Nao grave valores reais no Git.
-4. Em **cada** repositorio GitHub, configure o secret Actions `KUBE_CONFIG_B64`
-   com o kubeconfig codificado em Base64. A identidade Kubernetes deve ter
-   somente permissoes para ler os Secrets exigidos, aplicar Deployment/Service
-   e acompanhar rollouts no namespace `oficina`. Configure as imagens GHCR
-   como publicas ou um `imagePullSecret` na service account do namespace.
+4. No laboratorio EKS, aplique `eks-lab/deploy-rbac.yaml`. O workflow usa OIDC
+   para assumir a role `oficina-fase4-lab-github-deploy` e `aws eks
+   update-kubeconfig`, sem kubeconfig ou chaves AWS em GitHub Secrets. A role
+   publica apenas nos tres repositorios ECR do laboratorio e o grupo Kubernetes
+   `oficina-deployer` pode alterar Deployments/Services apenas em `oficina`.
 5. Configure protecao de `main`: PR obrigatorio e checks
    `build-test-analyze`, SonarCloud e, para OS, `distributed-bdd` obrigatorios.
    Essa configuracao de GitHub e externa ao codigo.
 
-Sem `KUBE_CONFIG_B64` e esses recursos, o job falha explicitamente. A presenca
+Sem a role OIDC e esses recursos, o job falha explicitamente. A presenca
 do workflow nao comprova deploy real: confirme o job `publish-deploy`, as
-imagens SHA e `kubectl -n oficina get deployments` apos o merge.
+imagens SHA no ECR e `kubectl -n oficina get deployments` apos o merge.
 
 ## Telemetria
 
