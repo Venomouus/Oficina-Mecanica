@@ -1,0 +1,141 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: oficina
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: os-db
+  namespace: oficina
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: os-db
+  template:
+    metadata:
+      labels:
+        app: os-db
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: oficina_os
+            - name: POSTGRES_USER
+              value: postgres
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: os-db-credentials
+                  key: password
+          resources:
+            requests: { cpu: 50m, memory: 128Mi, ephemeral-storage: 128Mi }
+            limits: { memory: 512Mi, ephemeral-storage: 1Gi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: os-db
+  namespace: oficina
+spec:
+  selector:
+    app: os-db
+  ports:
+    - port: 5432
+      targetPort: 5432
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: billing-db
+  namespace: oficina
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: billing-db
+  template:
+    metadata:
+      labels:
+        app: billing-db
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: mongo
+          image: mongo:7
+          ports:
+            - containerPort: 27017
+          resources:
+            requests: { cpu: 100m, memory: 256Mi, ephemeral-storage: 128Mi }
+            limits: { memory: 768Mi, ephemeral-storage: 1Gi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: billing-db
+  namespace: oficina
+spec:
+  selector:
+    app: billing-db
+  ports:
+    - port: 27017
+      targetPort: 27017
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq
+  namespace: oficina
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbitmq
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: rabbitmq
+          image: rabbitmq:3-management-alpine
+          ports:
+            - containerPort: 5672
+            - containerPort: 15672
+          env:
+            - name: RABBITMQ_DEFAULT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: messaging-secrets
+                  key: username
+            - name: RABBITMQ_DEFAULT_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: messaging-secrets
+                  key: password
+          resources:
+            requests: { cpu: 100m, memory: 256Mi, ephemeral-storage: 128Mi }
+            limits: { memory: 768Mi, ephemeral-storage: 1Gi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq
+  namespace: oficina
+spec:
+  selector:
+    app: rabbitmq
+  ports:
+    - name: amqp
+      port: 5672
+      targetPort: 5672
+    - name: management
+      port: 15672
+      targetPort: 15672

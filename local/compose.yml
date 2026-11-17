@@ -81,6 +81,7 @@ services:
       - '127.0.0.1:19090:9090'
       - '127.0.0.1:13200:3200'
       - '127.0.0.1:13100:3100'
+      - '14317:4317'
     volumes:
       - demo-observability:/data
       - ./grafana/provisioning:/etc/grafana/provisioning:ro

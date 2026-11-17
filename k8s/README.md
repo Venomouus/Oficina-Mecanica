@@ -1,0 +1,42 @@
+# Kubernetes local
+
+Os manifests foram separados em infraestrutura e serviços. A infraestrutura
+cria o namespace `oficina`, PostgreSQL do OS Service, MongoDB compartilhado em
+instâncias lógicas separadas e RabbitMQ. Cada serviço mantém seu próprio
+Deployment e Service no respectivo repositório.
+
+## Pré-requisitos
+
+- Docker Desktop com Kubernetes habilitado ou Minikube.
+- Imagens locais construídas no mesmo runtime do cluster.
+
+## Execução com Docker Desktop Kubernetes
+
+Na raiz do projeto:
+
+```powershell
+./k8s/eks-lab/setup-lab.ps1
+kubectl apply -f services/os-service/k8s/deployment.yaml
+kubectl apply -f services/billing-service/k8s/deployment.yaml
+kubectl apply -f services/execution-service/k8s/deployment.yaml
+kubectl get pods -n oficina
+```
+
+Para testar as APIs localmente:
+
+```powershell
+kubectl port-forward -n oficina service/os-service 8081:8081
+kubectl port-forward -n oficina service/billing-service 8082:8082
+kubectl port-forward -n oficina service/execution-service 8083:8083
+```
+
+Os Swagger ficam disponíveis nas portas `8081`, `8082` e `8083`.
+
+> Os manifestos dos servicos agora exigem Secrets externos
+> `os-service-secrets`, `billing-service-secrets`,
+> `execution-service-secrets` e `mercado-pago-secrets`; o script acima gera os
+> Secrets locais sem gravar senhas no Git. O arquivo `infra.yaml` exige Secrets
+> externos e nao prepara um ambiente de producao. As imagens
+> sao publicadas no GHCR pelo CI, nao sao mais imagens locais `:local`.
+> Veja [Fase 4: deploy e observabilidade](./FASE4-DEPLOY-OBSERVABILIDADE.md)
+> antes de executar esses comandos.
