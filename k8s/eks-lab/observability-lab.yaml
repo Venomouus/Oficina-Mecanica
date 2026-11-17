@@ -22,6 +22,7 @@ spec:
     metadata:
       labels: { app: otel-lgtm }
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: otel-lgtm
           image: grafana/otel-lgtm:0.33.0
@@ -45,8 +46,8 @@ spec:
             periodSeconds: 10
             failureThreshold: 12
           resources:
-            requests: { cpu: 200m, memory: 512Mi }
-            limits: { memory: 2Gi }
+            requests: { cpu: 200m, memory: 512Mi, ephemeral-storage: 128Mi }
+            limits: { memory: 2Gi, ephemeral-storage: 1Gi }
       volumes:
         - name: data
           emptyDir: {}

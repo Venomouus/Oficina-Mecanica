@@ -42,7 +42,7 @@ services:
     environment:
       POSTGRES_DB: oficina_os
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: ${OS_DB_PASSWORD:?Configure OS_DB_PASSWORD no ambiente}
     ports:
       - "5433:5432"
     volumes:
@@ -65,7 +65,7 @@ services:
     container_name: oficina-rabbitmq
     environment:
       RABBITMQ_DEFAULT_USER: oficina
-      RABBITMQ_DEFAULT_PASS: oficina
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?Configure RABBITMQ_PASSWORD no ambiente}
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -83,8 +83,9 @@ services:
     restart: on-failure
     environment:
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__OsDatabase: Host=os-db;Port=5432;Database=oficina_os;Username=postgres;Password=postgres
+      ConnectionStrings__OsDatabase: Host=os-db;Port=5432;Database=oficina_os;Username=postgres;Password=${OS_DB_PASSWORD:?Configure OS_DB_PASSWORD no ambiente}
       RabbitMq__Host: rabbitmq
+      RabbitMq__Password: ${RABBITMQ_PASSWORD:?Configure RABBITMQ_PASSWORD no ambiente}
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
     ports:
       - "8081:8080"
@@ -101,6 +102,7 @@ services:
       ASPNETCORE_URLS: http://+:8080
       Mongo__ConnectionString: mongodb://billing-db:27017
       RabbitMq__Host: rabbitmq
+      RabbitMq__Password: ${RABBITMQ_PASSWORD:?Configure RABBITMQ_PASSWORD no ambiente}
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
       MercadoPago__AccessToken: ${MERCADO_PAGO_ACCESS_TOKEN:-}
       MercadoPago__WebhookUrl: ${MERCADO_PAGO_WEBHOOK_URL:-}
@@ -122,6 +124,7 @@ services:
       Mongo__ConnectionString: mongodb://billing-db:27017
       Mongo__Database: oficina_execution
       RabbitMq__Host: rabbitmq
+      RabbitMq__Password: ${RABBITMQ_PASSWORD:?Configure RABBITMQ_PASSWORD no ambiente}
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
     ports:
       - "8083:8080"

@@ -15,6 +15,7 @@ spec:
     metadata:
       labels: { app: os-db }
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: postgres
           image: postgres:16-alpine
@@ -35,8 +36,8 @@ spec:
               command: ["pg_isready", "-U", "oficina", "-d", "oficina_os"]
             periodSeconds: 5
           resources:
-            requests: { cpu: 50m, memory: 128Mi }
-            limits: { memory: 512Mi }
+            requests: { cpu: 50m, memory: 128Mi, ephemeral-storage: 128Mi }
+            limits: { memory: 512Mi, ephemeral-storage: 1Gi }
       volumes:
         - name: data
           emptyDir: {}
@@ -66,6 +67,7 @@ spec:
     metadata:
       labels: { app: billing-db }
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: mongo
           image: mongo:7
@@ -83,8 +85,8 @@ spec:
             tcpSocket: { port: 27017 }
             periodSeconds: 5
           resources:
-            requests: { cpu: 100m, memory: 256Mi }
-            limits: { memory: 768Mi }
+            requests: { cpu: 100m, memory: 256Mi, ephemeral-storage: 128Mi }
+            limits: { memory: 768Mi, ephemeral-storage: 1Gi }
       volumes:
         - name: data
           emptyDir: {}
@@ -114,6 +116,7 @@ spec:
     metadata:
       labels: { app: execution-db }
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: mongo
           image: mongo:7
@@ -131,8 +134,8 @@ spec:
             tcpSocket: { port: 27017 }
             periodSeconds: 5
           resources:
-            requests: { cpu: 100m, memory: 256Mi }
-            limits: { memory: 768Mi }
+            requests: { cpu: 100m, memory: 256Mi, ephemeral-storage: 128Mi }
+            limits: { memory: 768Mi, ephemeral-storage: 1Gi }
       volumes:
         - name: data
           emptyDir: {}
@@ -162,6 +165,7 @@ spec:
     metadata:
       labels: { app: rabbitmq }
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: rabbitmq
           image: rabbitmq:3-management-alpine
@@ -183,8 +187,8 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 10
           resources:
-            requests: { cpu: 100m, memory: 256Mi }
-            limits: { memory: 768Mi }
+            requests: { cpu: 100m, memory: 256Mi, ephemeral-storage: 128Mi }
+            limits: { memory: 768Mi, ephemeral-storage: 1Gi }
       volumes:
         - name: data
           emptyDir: {}

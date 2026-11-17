@@ -15,10 +15,7 @@ Deployment e Service no respectivo repositório.
 Na raiz do projeto:
 
 ```powershell
-docker build -t oficina-os-service:local ./services/os-service
-docker build -t oficina-billing-service:local ./services/billing-service
-docker build -t oficina-execution-service:local ./services/execution-service
-kubectl apply -f k8s/infra.yaml
+./k8s/eks-lab/setup-lab.ps1
 kubectl apply -f services/os-service/k8s/deployment.yaml
 kubectl apply -f services/billing-service/k8s/deployment.yaml
 kubectl apply -f services/execution-service/k8s/deployment.yaml
@@ -37,8 +34,9 @@ Os Swagger ficam disponíveis nas portas `8081`, `8082` e `8083`.
 
 > Os manifestos dos servicos agora exigem Secrets externos
 > `os-service-secrets`, `billing-service-secrets`,
-> `execution-service-secrets` e `mercado-pago-secrets`; o arquivo `infra.yaml` e
-> apenas demonstrativo e nao prepara um ambiente de producao. As imagens
+> `execution-service-secrets` e `mercado-pago-secrets`; o script acima gera os
+> Secrets locais sem gravar senhas no Git. O arquivo `infra.yaml` exige Secrets
+> externos e nao prepara um ambiente de producao. As imagens
 > sao publicadas no GHCR pelo CI, nao sao mais imagens locais `:local`.
 > Veja [Fase 4: deploy e observabilidade](./FASE4-DEPLOY-OBSERVABILIDADE.md)
 > antes de executar esses comandos.

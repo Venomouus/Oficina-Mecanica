@@ -1,5 +1,11 @@
 # Oficina Mecanica API
 
+## Fase 4: microsservicos
+
+A entrega distribuida usa tres repositorios independentes: [OS Service](https://github.com/Venomouus/oficina-os-service), [Billing Service](https://github.com/Venomouus/oficina-billing-service) e [Execution Service](https://github.com/Venomouus/oficina-execution-service). Cada um mantem seu codigo, testes, CI/CD e manifestos Kubernetes. Este repositorio concentra o Compose local, a infraestrutura compartilhada e o [laboratorio EKS](k8s/eks-lab/README.md). O legado da Fase 3 abaixo permanece para referencia; nao e o deploy dos tres servicos da Fase 4.
+
+Para o Compose da Fase 4, defina `OS_DB_PASSWORD` e `RABBITMQ_PASSWORD` em um arquivo `.env` local (ignorado pelo Git) antes de iniciar. Mantenha esses valores estaveis enquanto os volumes persistirem; nao coloque credenciais no repositorio. O [roteiro dos servicos](services/README.md) descreve o fluxo local e o [roteiro Kubernetes](k8s/README.md) descreve o laboratorio.
+
 ## Entrega do Tech Challenge - AWS Academy
 
 EKS, RDS PostgreSQL, API Gateway e Lambda provisionados via Terraform.
